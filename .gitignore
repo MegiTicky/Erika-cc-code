@@ -1,0 +1,18 @@
+# Editors and local tooling
+.vscode/
+.idea/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+
+# Temporary and generated files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.download
+Thumbs.db
+.DS_Store
+
+# Downloaded website assets
+LeibaoAutolockCodex/CCVS API wiki/*_files/

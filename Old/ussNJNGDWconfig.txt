@@ -1,0 +1,10 @@
+resolution=3440,1440
+fov=70
+guiScale=4
+mode=2
+userID=MegiRicky
+source=ship
+psBackChannel=800
+psFrontChannel=801
+ssBackChannel=802
+ssFrontChannel=803

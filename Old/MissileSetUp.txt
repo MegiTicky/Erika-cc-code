@@ -1,0 +1,22 @@
+How to setup a missile
+
+1. Use schematics to paste the missile in the world. Note: No extra blocks should be attrached to the missile
+2. Shift right click the ship helm and assemble the missile
+3. Open the command computer, type "lua" and press enter. Then type "ship.setScaleI(0.5)" and press enter to scale the missile
+4. Destroy the advanced computer, and replace it with the computer with the correct ID (The computer with the script installed).
+5. Connect the computer to the electric motor with wired modem, right click the modem if the red signal light isn't Open
+6. Connect the computer with Ender modem
+7. Place a redstone transmitor on the left or the right side of the computer. This will be the detonation transmitor, make them the same channel as those transmitor on the bombs
+    BEWARE!!!: the restone transmition channel on every missile must be different
+8. Start the missileOnboard.lua on the computer, type in your desired missile number (Better if you have them in accending order starting from 1)
+9. break any extra blocks, including the command computer and the ship helm
+10. right click the propeller bearing to assemble it
+
+11. Paste / build the control system. Make them a ship(phyiscal object)
+12. Start the missHubGen2 script on the computer
+
+13. Use A and D to scroll through each missile. The missile nubmer will be shown. Note: controls are done on the tweaked controller
+14. Use W and S to scroll through the detected target, the currently locked target will be highlighted in blue.
+15. Press Enter to launch and press mouse left click to cancel launch
+
+Remark: There will not be any hit confirmation

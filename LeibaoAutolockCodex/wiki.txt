@@ -1,0 +1,6 @@
+CC-Tweaked: https://tweaked.cc/
+VS addition: https://github.com/xiewuzhiying/VS-Addition/wiki
+CCVS (access via internet archieve): I downloaded the API webpage and saved it in CCVS API wiki folder
+some peripheral (mainly the radar): https://github.com/SuperSpaceEye/Some-Peripherals/wiki
+Create: https://wiki.createmod.net/users/cc-tweaked-integration/rotational-speed-controller
+Void power (engine controller related): https://github.com/dfdyz/VoidPowerMod/wiki

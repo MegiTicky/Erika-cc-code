@@ -1,0 +1,6 @@
+resolution=3440,1440
+fov=70
+guiScale=4
+mode=1
+userID=MegiRicky
+source=7,-60,-10
