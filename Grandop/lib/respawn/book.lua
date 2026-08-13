@@ -16,6 +16,10 @@ local function selectorForTeam(team, area, extra)
     return s .. "]"
 end
 
+local function waitingSelector(team, tag)
+    return "@a[team=" .. team .. ",tag=" .. tag .. "]"
+end
+
 local function snbtString(value)
     -- Book pages are JSON strings nested inside a quoted SNBT string. Escape
     -- the JSON backslashes once more so Minecraft receives valid page JSON.
@@ -27,9 +31,11 @@ local function giveBook(target, title, page)
     local item = "minecraft:written_book{title:" .. snbtString(title) ..
         ",author:" .. snbtString("Grand Operation") ..
         ",pages:[" .. snbtString(pageJson) .. "]}"
-    local ok, reason = commands.exec("/item replace entity " .. target .. " weapon.mainhand with " .. item)
+    local ok, reason, affected = commands.exec("/item replace entity " .. target .. " weapon.mainhand with " .. item)
     if not ok then
-        print("Book delivery failed: " .. textutils.serialise(reason))
+        print("Book delivery failed (" .. title .. "): " .. textutils.serialise(reason))
+    elseif (affected or 0) > 0 then
+        print("Book delivered (" .. title .. "): " .. tostring(affected or 0))
     end
     return ok
 end
@@ -97,7 +103,7 @@ local function classBook(area, data, faction, team)
         table.insert(entries, { label = short, command = "/trigger grandop_class set " .. i })
     end
     if #entries > 0 then
-        giveBook(selectorForTeam(team, area, "tag=grandop_wait_class"), faction .. " Class", page("Choose Class", entries))
+        giveBook(waitingSelector(team, "grandop_wait_class"), faction .. " Class", page("Choose Class", entries))
     end
 end
 
@@ -113,7 +119,7 @@ local function tankBook(area, faction, team, tanks)
         table.insert(entries, { label = name .. " (" .. list[name].stock .. ")", command = "/trigger grandop_tank set " .. i })
     end
     if #entries > 0 then
-        giveBook(selectorForTeam(team, area, "tag=grandop_wait_tank"), faction .. " Tanks", page("Choose Tank", entries))
+        giveBook(waitingSelector(team, "grandop_wait_tank"), faction .. " Tanks", page("Choose Tank", entries))
     end
 end
 
@@ -124,7 +130,7 @@ local function spawnBook(area, respawn, faction, team, stage)
         table.insert(entries, { label = spawn.name, command = "/trigger grandop_spawn set " .. i })
     end
     if #entries > 0 then
-        giveBook(selectorForTeam(team, area, "tag=grandop_wait_spawn"), faction .. " Spawn", page("Choose Spawn", entries))
+        giveBook(waitingSelector(team, "grandop_wait_spawn"), faction .. " Spawn", page("Choose Spawn", entries))
     end
 end
 
@@ -135,7 +141,7 @@ local function tankSpawnBook(area, respawn, faction, team)
         table.insert(entries, { label = spawn.name, command = "/trigger grandop_tank_spawn set " .. i })
     end
     if #entries > 0 then
-        giveBook(selectorForTeam(team, area, "tag=grandop_wait_tank_spawn"), faction .. " Tank Spawn", page("Choose Tank Spawn", entries))
+        giveBook(waitingSelector(team, "grandop_wait_tank_spawn"), faction .. " Tank Spawn", page("Choose Tank Spawn", entries))
     end
 end
 
@@ -143,10 +149,12 @@ local function processingSelector(team)
     return "@a[team=" .. team .. ",tag=grandop_processing,limit=1]"
 end
 
-local function candidateSelector(team, area, scoreName, score, tag, secondScoreName, secondScore)
+local function candidateSelector(team, scoreName, score, tag, secondScoreName, secondScore)
     local scores = scoreName .. "=" .. score
     if secondScoreName then scores = scores .. "," .. secondScoreName .. "=" .. secondScore end
-    return "@a[team=" .. team .. ",x=" .. area.x .. ",y=" .. area.y .. ",z=" .. area.z .. ",distance=.." .. area.radius .. ",tag=" .. tag .. ",scores={" .. scores .. "},limit=1]"
+    -- The book click closes the GUI before the next tick. Use the session tag
+    -- and score as the authoritative state, not the player's exact location.
+    return "@a[team=" .. team .. ",tag=" .. tag .. ",scores={" .. scores .. "},limit=1]"
 end
 
 local function randomTeleport(target, spawn, radius)
@@ -173,6 +181,8 @@ function book.run(ctx)
     local tankObjective = "grandop_tank"
     local tankSpawnObjective = "grandop_tank_spawn"
     local stagingStatus = {}
+
+    print("Book respawn service started")
 
     addObjective(modeObjective)
     addObjective(classObjective)
@@ -223,7 +233,7 @@ function book.run(ctx)
         local faction = factionForTeam(mission, team)
         local area = stagingArea(respawn, faction, ctx.stage)
         if not area then return end
-        local selector = candidateSelector(team, area, modeObjective, mode, "grandop_wait_mode")
+        local selector = candidateSelector(team, modeObjective, mode, "grandop_wait_mode")
         if not commands.exec("execute if entity " .. selector) then return end
         commands.exec("/tag " .. selector .. " remove grandop_wait_mode")
         if mode == 1 then
@@ -245,7 +255,7 @@ function book.run(ctx)
         local classes = factionClasses(data, faction)
         local className = classes[classIndex]
         if not className then return end
-        local selector = candidateSelector(team, area, classObjective, classIndex, "grandop_wait_class")
+        local selector = candidateSelector(team, classObjective, classIndex, "grandop_wait_class")
         if not commands.exec("execute if entity " .. selector) then return end
         print("Class selected: " .. className)
         commands.exec("/tag " .. selector .. " remove grandop_wait_class")
@@ -262,7 +272,7 @@ function book.run(ctx)
         local spawnList = respawn.infantrySpawns[faction] and respawn.infantrySpawns[faction][ctx.stage.current] or {}
         local spawn = spawnList[spawnIndex]
         if not className or not spawn then return end
-        local selector = candidateSelector(team, area, spawnObjective, spawnIndex, "grandop_wait_spawn", classObjective, classIndex)
+        local selector = candidateSelector(team, spawnObjective, spawnIndex, "grandop_wait_spawn", classObjective, classIndex)
         if not commands.exec("execute if entity " .. selector) then return end
         print("Infantry spawn selected: " .. faction .. " " .. spawn.name)
         if respawn.canDeploy and not respawn.canDeploy(faction, "infantry", spawn.name) then
@@ -303,7 +313,7 @@ function book.run(ctx)
         local area = stagingArea(respawn, faction, ctx.stage)
         if not area then return end
         local tankName = tankNamesForFaction(faction)[tankIndex]
-        local selector = candidateSelector(team, area, tankObjective, tankIndex, "grandop_wait_tank")
+        local selector = candidateSelector(team, tankObjective, tankIndex, "grandop_wait_tank")
         if not tankName or not commands.exec("execute if entity " .. selector) then return end
         print("Tank selected: " .. faction .. " " .. tankName)
         commands.exec("/tag " .. selector .. " remove grandop_wait_tank")
@@ -317,7 +327,7 @@ function book.run(ctx)
         if not area then return end
         local tankName = tankNamesForFaction(faction)[tankIndex]
         local spawn = respawn.vehicleSpawns[faction] and respawn.vehicleSpawns[faction][spawnIndex]
-        local selector = candidateSelector(team, area, tankSpawnObjective, spawnIndex, "grandop_wait_tank_spawn", tankObjective, tankIndex)
+        local selector = candidateSelector(team, tankSpawnObjective, spawnIndex, "grandop_wait_tank_spawn", tankObjective, tankIndex)
         if not tankName or not spawn or not commands.exec("execute if entity " .. selector) then return end
         print("Tank spawn selected: " .. faction .. " " .. tankName .. " -> " .. spawn.name)
         if vehicles.timeToNext(v, faction, tankName) > 0 then
@@ -377,7 +387,7 @@ function book.run(ctx)
         local faction = factionForTeam(mission, team)
         local area = stagingArea(respawn, faction, ctx.stage)
         if not area then return end
-        factionBook(selectorForTeam(team, area, "tag=grandop_wait_mode"), faction, features.tanks and ctx.radar)
+        factionBook(waitingSelector(team, "grandop_wait_mode"), faction, features.tanks and ctx.radar)
         classBook(area, data, faction, team)
         if features.tanks then
             tankBook(area, faction, team, respawn.tanks)
