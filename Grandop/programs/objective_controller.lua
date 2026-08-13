@@ -21,7 +21,10 @@ local function rootRequire(name)
 end
 _G.require = rootRequire
 
-local mission = require("missions." .. missionId)
+local missionFile = "/missions/" .. missionId:gsub("[^%w_%-]", "") .. ".lua"
+local missionChunk, missionReason = loadfile(missionFile)
+if not missionChunk then error("Cannot load " .. missionFile .. ": " .. tostring(missionReason)) end
+local mission = missionChunk()
 local objective = mission.objective
 if not objective then error("Mission has no objective config: " .. missionId) end
 

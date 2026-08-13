@@ -19,7 +19,13 @@ local function rootRequire(name)
 end
 _G.require = rootRequire
 
-local mission = missionId and require("missions." .. missionId)
+local mission
+if missionId then
+    local missionFile = "/missions/" .. missionId:gsub("[^%w_%-]", "") .. ".lua"
+    local missionChunk, missionReason = loadfile(missionFile)
+    if not missionChunk then error("Cannot load " .. missionFile .. ": " .. tostring(missionReason)) end
+    mission = missionChunk()
+end
 
 local tickets = require("lib.tickets")
 
