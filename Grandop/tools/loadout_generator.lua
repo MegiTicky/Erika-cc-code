@@ -15,6 +15,8 @@
 -- Chest contents only record item id + count; the NBT of complex items depends
 -- on the inventory API and mod, so verify generated loadouts in game.
 
+package.path = "/?.lua;/?/init.lua;" .. package.path
+
 local json = require("lib.json")
 
 local function ask(prompt, default)

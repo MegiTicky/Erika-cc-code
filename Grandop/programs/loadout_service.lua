@@ -7,6 +7,8 @@
 --
 -- Usage: loadout_service [loadout_file]
 
+package.path = "/?.lua;/?/init.lua;" .. package.path
+
 local loadout = require("lib.loadout")
 
 local args = { ... }

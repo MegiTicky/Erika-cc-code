@@ -11,6 +11,8 @@ if not missionId then
     error("Usage: objective_controller <mission>")
 end
 
+package.path = "/?.lua;/?/init.lua;" .. package.path
+
 local mission = require("missions." .. missionId)
 local objective = mission.objective
 if not objective then error("Mission has no objective config: " .. missionId) end
