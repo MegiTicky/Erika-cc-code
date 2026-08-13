@@ -10,11 +10,15 @@
 -- The mission configuration supplies all map data and optional hooks so the
 -- engine stays mission-agnostic.
 
-local mc   = require("lib.minecraft")
-local stage = require("lib.stage_channel")
-local tickets = require("lib.tickets")
+local mc   = grandopRequire("lib.minecraft")
+local stage = grandopRequire("lib.stage_channel")
+local tickets = grandopRequire("lib.tickets")
 
 local engine = {}
+
+local function teamColor(team)
+    return team == "Blue" and "blue" or "red"
+end
 
 local function validate(mcfg)
     assert(mcfg.captureZones and #mcfg.captureZones > 0, "Mission needs captureZones")
@@ -77,6 +81,14 @@ function engine.run(mcfg)
     end
 
     local function refreshSpawns()
+        if mcfg.stagingAreas and mcfg.teamFactions then
+            for team, faction in pairs(mcfg.teamFactions) do
+                local areas = mcfg.stagingAreas[faction]
+                local area = areas and (areas[state.zone] or areas.default)
+                if area then mc.setSpawnpoint(team, area.x, area.y, area.z) end
+            end
+            return
+        end
         local atkSpawns = mcfg.attackerSpawns or {}
         local defSpawns = mcfg.defenderSpawns or {}
         local atk = atkSpawns[state.zone] or atkSpawns
@@ -90,17 +102,21 @@ function engine.run(mcfg)
         local color = "white"
         local value = state.score
         if value < 0 then
-            color = "blue"
+            color = teamColor(mcfg.defenseTeam)
             value = -value
         elseif value > 0 then
-            color = "red"
+            color = teamColor(mcfg.attackTeam)
         end
-        commands.exec("/bossbar set " .. barId .. " value " .. tostring(value / 2))
+        local maxValue = capture.maxValue or 100
+        local progress = math.floor(math.max(0, math.min(threshold, value)) * maxValue / threshold)
+        commands.exec("/bossbar set " .. barId .. " value " .. tostring(progress))
         commands.exec("/bossbar set " .. barId .. " color " .. color)
 
         if mode == "bidirectional" and mcfg.objectiveNames then
             local name = mcfg.objectiveNames[state.zone]
             commands.exec('/bossbar set ' .. barId .. ' name "Objective ' .. tostring(name) .. '"')
+        elseif mode == "forward" then
+            commands.exec('/bossbar set ' .. barId .. ' name "Stage ' .. state.zone .. ' of ' .. #zones .. '"')
         elseif mcfg.capture.bossbarName then
             commands.exec('/bossbar set ' .. barId .. ' name "' .. tostring(mcfg.capture.bossbarName) .. '"')
         end
@@ -117,22 +133,11 @@ function engine.run(mcfg)
         end
     end
 
-    local function gameEnd()
+    local function gameEnd(winner, reason)
         state.ended = true
         if hooks.onGameEnd then hooks.onGameEnd(state) end
-        if mode == "bidirectional" then
-            -- Frontline ends with a title; hold until the server restarts.
-            while true do sleep(2) end
-        end
-        while true do
-            if mcfg.localTickets then
-                tickets.applyLocal(mcfg.attackTeam, mcfg.defenseTeam, 0, -10)
-            elseif mcfg.ticketComputerId then
-                rednet.send(mcfg.ticketComputerId, tickets.format(0, -10))
-            end
-            sleep(2)
-            print("Game Ended")
-        end
+        mc.title('{"text":"' .. tostring(winner) .. ' wins!","color":"' .. teamColor(winner) .. '"}')
+        print("Game ended: " .. tostring(reason))
     end
 
     -- Complete the current zone and move the line.
@@ -149,11 +154,10 @@ function engine.run(mcfg)
             mc.title('{"text":"Objective ' .. tostring(name) .. ' captured!","color":"green"}')
             if nextZone > #zones or nextZone < 1 then
                 if nextZone > #zones then
-                    mc.title('{"text":"' .. tostring(mcfg.attackTeam) .. ' wins","color":"red"}')
+                    return gameEnd(mcfg.attackTeam, "enemy base captured")
                 else
-                    mc.title('{"text":"' .. tostring(mcfg.defenseTeam) .. ' wins","color":"blue"}')
+                    return gameEnd(mcfg.defenseTeam, "enemy base captured")
                 end
-                return gameEnd()
             end
             if hub then stage.broadcast(hub, nextZone) end
             sleep(announceDelay)
@@ -164,13 +168,14 @@ function engine.run(mcfg)
             if mcfg.stageState then mcfg.stageState.current = state.zone end
         else
             sendTickets(state.zone)
+            mc.title('{"text":"Objective Captured! Stage ' .. state.zone .. ' Completed!","color":"green"}')
 
             if state.zone == #zones then
                 -- final zone captured
                 redstone.setAnalogOutput("right", 15)
                 sleep(0.1)
                 redstone.setAnalogOutput("right", 0)
-                return gameEnd()
+                return gameEnd(mcfg.attackTeam, "all objectives captured")
             elseif state.zone == #zones - 1 then
                 redstone.setAnalogOutput("left", 15)
                 sleep(0.1)
@@ -204,9 +209,13 @@ function engine.run(mcfg)
     if hub then stage.broadcast(hub, state.zone) end
 
     local skipCooldown = 0
+    local lastBossbarPlayerRefresh = 0
 
     -- Main loop
     while not state.ended do
+        if mcfg.attackerDepleted and mcfg.attackerDepleted() then
+            return gameEnd(mcfg.defenseTeam, "attacker reinforcements depleted")
+        end
         local zone = currentZone()
         local attackerDetected = mc.playersInRange(mcfg.attackTeam, zone.x, zone.y, zone.z, radius)
         local defenderDetected = mc.playersInRange(mcfg.defenseTeam, zone.x, zone.y, zone.z, radius)
@@ -266,8 +275,14 @@ function engine.run(mcfg)
             end
         end
 
+        if state.ended then break end
+
         setBeacon(currentZone())
         updateBossbar()
+        if os.clock() >= lastBossbarPlayerRefresh then
+            commands.exec("/bossbar set " .. tostring(mcfg.bossbarId) .. " players @a")
+            lastBossbarPlayerRefresh = os.clock() + 1
+        end
         refreshSpawns()
 
         sleep(interval)

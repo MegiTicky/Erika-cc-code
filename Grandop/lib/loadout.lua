@@ -2,7 +2,7 @@
 -- Loads class kits and repair kits from external per-mission JSON files and
 -- applies them through commands. See data/loadouts/*.json for the format.
 
-local json = require("lib.json")
+local json = grandopRequire("lib.json")
 
 local loadout = {}
 

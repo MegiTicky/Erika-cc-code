@@ -22,41 +22,40 @@ respawn = {
     -- Keep ROM startup unattended. Change these to true for an explicit reset.
     resetTanks = false,
     resetSpawns = false,
-    area = { x = 4293, y = 23, z = 6700, radius = 50 },
+    -- Players respawn here, receive a book, and choose their deployment.
+    -- Stage-specific entries may replace `default` in later missions.
+    stagingAreas = {
+        USMC = { default = { x = 4243, y = 308, z = 6653, radius = 10 } },
+        japan = { default = { x = 4237, y = 308, z = 6653, radius = 10 } },
+    },
     reserve = { x = 1572, y = 90, z = 6280 },
     numPointsX = 3, numPointsZ = 3, spacing = 20,
     spawnRadius = 50,
     creativeRadius = 50,
 
-    tanks = {
-        germany = {
-            tigeri  = { stock = 1, cooldown = 180, buffer = 1 },
-            panther = { stock = 5, cooldown = 120, buffer = 2 },
-            panzer4 = { stock = 8, cooldown = 60,  buffer = 9999 },
+    -- Breakthrough pools are additive. Phase 2 makes every listed vehicle
+    -- available at stage 1 and adds none at later stages.
+    vehiclePools = {
+        policy = "add",
+        initial = {
+            japan = {
+                chinu = { stock = 2, cooldown = 180, buffer = 1 },
+                horo  = { stock = 1, cooldown = 180, buffer = 1 },
+            },
+            USMC = {
+                sherman75usmc = { stock = 3, cooldown = 180, buffer = 1 },
+            },
         },
-        allied = {
-            sherman75      = { stock = 11, cooldown = 3,  buffer = 1 },
-            shermanfirefly = { stock = 2,  cooldown = 60, buffer = 1 },
-            churchillvii   = { stock = 2,  cooldown = 60, buffer = 1 },
-        },
-        japan = {
-            chinu = { stock = 2, cooldown = 180, buffer = 1 },
-            horo  = { stock = 1, cooldown = 180, buffer = 1 },
-        },
-        USMC = {
-            sherman75usmc = { stock = 3, cooldown = 180, buffer = 1 },
-        },
+        additions = {},
     },
 
-    coords = {
-        germany = { { name = "Main", x = 5847, y = 38, z = 6540 } },
-        allied  = { { name = "Main", x = 7094, y = 28, z = 6473 } },
+    vehicleSpawns = {
         japan = {
-            { name = "S1 Town Spawn", x = 6068, y = 27, z = 5417 },
-            { name = "S2 Hill Top", x = 5401, y = 62, z = 4658 },
-            { name = "S3 West Plane", x = 4747, y = 21, z = 4602 },
+            { name = "S1 Town Spawn", x = 6068, y = 27, z = 5417, useGrid = true },
+            { name = "S2 Hill Top", x = 5401, y = 62, z = 4658, useGrid = true },
+            { name = "S3 West Plane", x = 4747, y = 21, z = 4602, useGrid = true },
         },
-        USMC = { { name = "Main spawn", x = 4293, y = 23, z = 6700 } },
+        USMC = { { name = "Main tank spawn", x = 4293, y = 23, z = 6700, useGrid = true } },
     },
 
     infantrySpawns = {
@@ -99,7 +98,7 @@ respawn = {
     townQuotas = townQuotas,
 
     creativeZones = function(country)
-        return respawn.coords[country] or {}
+        return respawn.vehicleSpawns[country] or {}
     end,
 
     initScoreboard = function(reset)
@@ -176,27 +175,43 @@ respawn = {
         commands.exec("/scoreboard players set TownZ_JPSpawn Troops_Strength " .. (townQuotas["Town Z"] - (tonumber(z) or 0)))
     end,
 
+    -- A reinforcement is committed only after a book deployment succeeds.
+    -- Japan's town quota applies to infantry choices; tank stock is separate.
+    canDeploy = function(country, kind, spawnName)
+        if country == "USMC" then return respawn.hasQuota(country) end
+        if kind == "infantry" then return respawn.hasQuota(country, spawnName) end
+        return true
+    end,
+
+    consumeDeployment = function(country, kind, spawnName)
+        if country == "USMC" then return respawn.decrementQuota(country) end
+        if kind == "infantry" then return respawn.decrementQuota(country, spawnName) end
+        return true
+    end,
+
+    attackerDepleted = function()
+        return not respawn.hasQuota("USMC")
+    end,
+
     -- JP units retreat from a town to the next when the stage advances.
     retreatLoop = function(ctx)
         while true do
-            if ctx.country == "japan" then
-                if ctx.stage.current == 2 and not retreat.townXRetreated then
-                    print("Retreat from X")
-                    local _, _, xCount = commands.exec("/scoreboard players get TownX_JP spawnCount")
-                    local remainingX = townQuotas["Town X"] - (tonumber(xCount) or 0)
-                    commands.exec("/scoreboard players set TownX_JP spawnCount " .. townQuotas["Town X"])
-                    commands.exec("/scoreboard players remove TownY_JP spawnCount " .. math.floor(remainingX * 0.7))
-                    commands.exec("/say JP soldier in town X retreated to town Y")
-                    retreat.townXRetreated = true
-                elseif ctx.stage.current == 3 and not retreat.townYRetreated then
-                    print("Retreat from Y")
-                    local _, _, yCount = commands.exec("/scoreboard players get TownY_JP spawnCount")
-                    local remainingY = townQuotas["Town Y"] - (tonumber(yCount) or 0)
-                    commands.exec("/scoreboard players set TownY_JP spawnCount " .. townQuotas["Town Y"])
-                    commands.exec("/scoreboard players remove TownZ_JP spawnCount " .. math.floor(remainingY * 0.7))
-                    commands.exec("/say JP soldier in town Y retreated to town Z")
-                    retreat.townYRetreated = true
-                end
+            if ctx.stage.current == 2 and not retreat.townXRetreated then
+                print("Retreat from X")
+                local _, _, xCount = commands.exec("/scoreboard players get TownX_JP spawnCount")
+                local remainingX = townQuotas["Town X"] - (tonumber(xCount) or 0)
+                commands.exec("/scoreboard players set TownX_JP spawnCount " .. townQuotas["Town X"])
+                commands.exec("/scoreboard players remove TownY_JP spawnCount " .. math.floor(remainingX * 0.7))
+                commands.exec("/say JP soldier in town X retreated to town Y")
+                retreat.townXRetreated = true
+            elseif ctx.stage.current == 3 and not retreat.townYRetreated then
+                print("Retreat from Y")
+                local _, _, yCount = commands.exec("/scoreboard players get TownY_JP spawnCount")
+                local remainingY = townQuotas["Town Y"] - (tonumber(yCount) or 0)
+                commands.exec("/scoreboard players set TownY_JP spawnCount " .. townQuotas["Town Y"])
+                commands.exec("/scoreboard players remove TownZ_JP spawnCount " .. math.floor(remainingY * 0.7))
+                commands.exec("/say JP soldier in town Y retreated to town Z")
+                retreat.townYRetreated = true
             end
             sleep(0.5)
         end
@@ -206,6 +221,13 @@ respawn = {
 return {
     id = "lieyu_phase_2",
     name = "Lieyu Phase 2",
+    mode = "breakthrough",
+
+    features = {
+        tanks = true,
+        creative = false,
+        stageSync = false,
+    },
 
     objective = {
         type = "staged_capture",
@@ -223,17 +245,6 @@ return {
             { x = 4836, y = 19, z = 6160 },
             { x = 4711, y = 16, z = 5925 },
             { x = 4815, y = 28, z = 5561 },
-        },
-
-        attackerSpawns = {
-            { x = 4243, y = 308, z = 6653 },
-            { x = 4243, y = 308, z = 6653 },
-            { x = 4243, y = 308, z = 6653 },
-        },
-        defenderSpawns = {
-            { x = 4237, y = 308, z = 6653 },
-            { x = 4237, y = 308, z = 6653 },
-            { x = 4237, y = 308, z = 6653 },
         },
 
         ticketRewards = {

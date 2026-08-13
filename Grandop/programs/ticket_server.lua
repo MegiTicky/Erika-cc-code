@@ -18,6 +18,7 @@ local function rootRequire(name)
     return package.loaded[name]
 end
 _G.require = rootRequire
+_G.grandopRequire = rootRequire
 
 local mission
 if missionId then
@@ -27,7 +28,7 @@ if missionId then
     mission = missionChunk()
 end
 
-local tickets = require("lib.tickets")
+local tickets = grandopRequire("lib.tickets")
 
 local options = {
     openSide = "bottom",

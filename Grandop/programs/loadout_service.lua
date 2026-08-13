@@ -16,8 +16,9 @@ local function rootRequire(name)
     return package.loaded[name]
 end
 _G.require = rootRequire
+_G.grandopRequire = rootRequire
 
-local loadout = require("lib.loadout")
+local loadout = grandopRequire("lib.loadout")
 
 local args = { ... }
 local dataFile = args[1] or "data/loadouts/loadout_service.json"

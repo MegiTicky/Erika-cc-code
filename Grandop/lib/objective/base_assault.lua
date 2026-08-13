@@ -4,7 +4,7 @@
 -- on a bossbar. Capturing the enemy base ends the round instantly. Faithful
 -- port of BattleGroundSystem.lua, driven by mission config.
 
-local mc = require("minecraft")
+local mc = grandopRequire("lib.minecraft")
 
 local engine = {}
 

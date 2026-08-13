@@ -4,7 +4,7 @@
 -- first owns the zone and drains the enemy tickets each tick until one side
 -- hits zero. Faithful port of conquestGround.lua, driven by mission config.
 
-local mc = require("minecraft")
+local mc = grandopRequire("lib.minecraft")
 
 local engine = {}
 

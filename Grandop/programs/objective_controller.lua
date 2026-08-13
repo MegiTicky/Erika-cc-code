@@ -20,6 +20,7 @@ local function rootRequire(name)
     return package.loaded[name]
 end
 _G.require = rootRequire
+_G.grandopRequire = rootRequire
 
 local missionFile = "/missions/" .. missionId:gsub("[^%w_%-]", "") .. ".lua"
 local missionChunk, missionReason = loadfile(missionFile)
@@ -33,11 +34,11 @@ rednet.open(objective.rednetSide or "bottom")
 
 local engine
 if objective.type == "staged_capture" then
-    engine = require("lib.objective.staged_capture")
+    engine = grandopRequire("lib.objective.staged_capture")
 elseif objective.type == "control_point" then
-    engine = require("lib.objective.control_point")
+    engine = grandopRequire("lib.objective.control_point")
 elseif objective.type == "base_assault" then
-    engine = require("lib.objective.base_assault")
+    engine = grandopRequire("lib.objective.base_assault")
 else
     error("Unknown objective type: " .. tostring(objective.type))
 end

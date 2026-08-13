@@ -1,9 +1,17 @@
 -- Grandop vehicle (tank) respawn support.
 -- Token-based cooldowns, stock persistence, spawn grids, and the touch UI.
 
-local monitor_ui = require("lib.monitor_ui")
+local monitor_ui = grandopRequire("lib.monitor_ui")
 
 local vehicles = {}
+
+local function status(monitor, text)
+    if monitor then
+        monitor_ui.print(monitor, text)
+    else
+        print(text)
+    end
+end
 
 local function now()
     return os.epoch("utc") / 1000
@@ -327,7 +335,7 @@ function vehicles.spawnTank(ctx)
 
         local oldTank = ctx.playerTankMap[player]
         if oldTank then
-            monitor_ui.print(monitor, "Moving old tank " .. oldTank .. " to reserve area...")
+            status(monitor, "Moving old tank " .. oldTank .. " to reserve area...")
             local offsetX = math.random(-100, 100)
             local offsetZ = math.random(-100, 100)
             local rX = mission.reserve.x + offsetX
@@ -344,7 +352,7 @@ function vehicles.spawnTank(ctx)
             commands.exec(("fill %d %d %d %d %d %d air"):format(rX, rY, rY, rX, rY, rY))
         end
 
-        monitor_ui.print(monitor, ("Teleporting %s to X:%d Y:%d Z:%d"):format(tankToTeleport, finalX, finalY, finalZ))
+        status(monitor, ("Teleporting %s to X:%d Y:%d Z:%d"):format(tankToTeleport, finalX, finalY, finalZ))
         commands.exec("vs set-static " .. tankToTeleport .. " true")
         sleep(0.3)
 
@@ -354,11 +362,11 @@ function vehicles.spawnTank(ctx)
 
         local teleportFailed = not (result and result[1] == nil)
         if teleportFailed then
-            monitor_ui.print(monitor, "Tank not found, trying next...")
+            status(monitor, "Tank not found, trying next...")
             tankNumber = tankNumber - 1
         else
             teleported = true
-            monitor_ui.print(monitor, "Teleport successful!")
+            status(monitor, "Teleport successful!")
             ctx.playerTankMap[player] = tankToTeleport
             commands.exec(("give %s create_tweaked_controllers:tweaked_linked_controller{display:{Name:'{\"text\":\"%s\"}'}}"):format(player, tankToTeleport))
 
@@ -387,9 +395,7 @@ function vehicles.spawnTank(ctx)
     end
 
     if not teleported then
-        monitor_ui.print(monitor, "No tanks of type " .. ctx.tankName .. " could be found!")
-        vehicles.setStock(v, country, ctx.tankName, 0)
-        vehicles.saveTankList(ctx.tankListFile, v.tanks)
+        status(monitor, "No tanks of type " .. ctx.tankName .. " could be found!")
     end
 
     return teleported

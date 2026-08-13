@@ -24,8 +24,9 @@ local function rootRequire(name)
     return package.loaded[name]
 end
 _G.require = rootRequire
+_G.grandopRequire = rootRequire
 
-local json = require("lib.json")
+local json = grandopRequire("lib.json")
 
 local function ask(prompt, default)
     if default then print(prompt .. " (default: " .. tostring(default) .. ")")

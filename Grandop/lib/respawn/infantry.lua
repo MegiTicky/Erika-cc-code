@@ -3,8 +3,8 @@
 -- selection, and teleporting. Mission-specific quota rules are injected via
 -- ctx.hasQuota / ctx.decrementQuota so the module stays reusable.
 
-local monitor_ui = require("lib.monitor_ui")
-local loadout = require("lib.loadout")
+local monitor_ui = grandopRequire("lib.monitor_ui")
+local loadout = grandopRequire("lib.loadout")
 
 local infantry = {}
 

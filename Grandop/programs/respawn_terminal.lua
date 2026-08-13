@@ -25,6 +25,7 @@ local function rootRequire(name)
     return package.loaded[name]
 end
 _G.require = rootRequire
+_G.grandopRequire = rootRequire
 
 local missionFile = "/missions/" .. missionId:gsub("[^%w_%-]", "") .. ".lua"
 local missionChunk, missionReason = loadfile(missionFile)
@@ -33,13 +34,13 @@ local mission = missionChunk()
 local respawnCfg = mission.respawn
 if not respawnCfg then error("Mission has no respawn config: " .. missionId) end
 
-local mc = require("lib.minecraft")
-local monitor_ui = require("lib.monitor_ui")
-local loadout = require("lib.loadout")
-local stage = require("lib.stage_channel")
-local vehicles = require("lib.respawn.vehicles")
-local infantry = require("lib.respawn.infantry")
-local creative_area = require("lib.services.creative_area")
+local mc = grandopRequire("lib.minecraft")
+local monitor_ui = grandopRequire("lib.monitor_ui")
+local loadout = grandopRequire("lib.loadout")
+local stage = grandopRequire("lib.stage_channel")
+local vehicles = grandopRequire("lib.respawn.vehicles")
+local infantry = grandopRequire("lib.respawn.infantry")
+local creative_area = grandopRequire("lib.services.creative_area")
 
 monitor.clear()
 monitor.setTextScale(0.5)
