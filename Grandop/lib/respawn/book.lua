@@ -181,8 +181,9 @@ function book.run(ctx)
     local tankObjective = "grandop_tank"
     local tankSpawnObjective = "grandop_tank_spawn"
     local stagingStatus = {}
+    local log = ctx.log or print
 
-    print("Book respawn service started")
+    log("Book respawn service started")
 
     addObjective(modeObjective)
     addObjective(classObjective)
@@ -217,15 +218,19 @@ function book.run(ctx)
         local present = commands.exec("execute if entity " .. selector)
         if stagingStatus[team] ~= present then
             stagingStatus[team] = present
-            print("Staging scan " .. team .. " at " .. area.x .. "," .. area.y .. "," .. area.z .. ": " .. tostring(present))
+            log("Staging scan " .. team .. " at " .. area.x .. "," .. area.y .. "," .. area.z .. ": " .. tostring(present))
         end
         if not present then return end
         if factionBook(selector, faction, features.tanks and ctx.radar) then
-            commands.exec("/tag " .. selector .. " add grandop_book")
             commands.exec("/tag " .. selector .. " add grandop_wait_mode")
             commands.exec("/scoreboard players set " .. selector .. " " .. modeObjective .. " 0")
             commands.exec("/scoreboard players set " .. selector .. " " .. classObjective .. " 0")
             commands.exec("/scoreboard players set " .. selector .. " " .. spawnObjective .. " 0")
+            if features.tanks then
+                commands.exec("/scoreboard players set " .. selector .. " " .. tankObjective .. " 0")
+                commands.exec("/scoreboard players set " .. selector .. " " .. tankSpawnObjective .. " 0")
+            end
+            commands.exec("/tag " .. selector .. " add grandop_book")
         end
     end
 
@@ -235,17 +240,19 @@ function book.run(ctx)
         if not area then return end
         local selector = candidateSelector(team, modeObjective, mode, "grandop_wait_mode")
         if not commands.exec("execute if entity " .. selector) then return end
-        commands.exec("/tag " .. selector .. " remove grandop_wait_mode")
         if mode == 1 then
-            print("Mode selected: " .. faction .. " infantry")
+            log("Mode selected: " .. faction .. " infantry")
             commands.exec("/tag " .. selector .. " add grandop_wait_class")
+            commands.exec("/scoreboard players set " .. selector .. " " .. modeObjective .. " 0")
+            commands.exec("/tag " .. selector .. " remove grandop_wait_mode")
             classBook(area, data, faction, team)
         elseif features.tanks then
-            print("Mode selected: " .. faction .. " tank")
+            log("Mode selected: " .. faction .. " tank")
             commands.exec("/tag " .. selector .. " add grandop_wait_tank")
+            commands.exec("/scoreboard players set " .. selector .. " " .. modeObjective .. " 0")
+            commands.exec("/tag " .. selector .. " remove grandop_wait_mode")
             tankBook(area, faction, team, respawn.tanks)
         end
-        commands.exec("/scoreboard players set " .. selector .. " " .. modeObjective .. " 0")
     end
 
     local function processClass(team, classIndex)
@@ -257,9 +264,9 @@ function book.run(ctx)
         if not className then return end
         local selector = candidateSelector(team, classObjective, classIndex, "grandop_wait_class")
         if not commands.exec("execute if entity " .. selector) then return end
-        print("Class selected: " .. className)
-        commands.exec("/tag " .. selector .. " remove grandop_wait_class")
+        log("Class selected: " .. className)
         commands.exec("/tag " .. selector .. " add grandop_wait_spawn")
+        commands.exec("/tag " .. selector .. " remove grandop_wait_class")
         spawnBook(area, respawn, faction, team, ctx.stage)
     end
 
@@ -274,7 +281,7 @@ function book.run(ctx)
         if not className or not spawn then return end
         local selector = candidateSelector(team, spawnObjective, spawnIndex, "grandop_wait_spawn", classObjective, classIndex)
         if not commands.exec("execute if entity " .. selector) then return end
-        print("Infantry spawn selected: " .. faction .. " " .. spawn.name)
+        log("Infantry spawn selected: " .. faction .. " " .. spawn.name)
         if respawn.canDeploy and not respawn.canDeploy(faction, "infantry", spawn.name) then
             commands.exec("/tellraw " .. selector .. " {\"text\":\"Respawn quota exhausted\",\"color\":\"red\"}")
             return
@@ -315,9 +322,9 @@ function book.run(ctx)
         local tankName = tankNamesForFaction(faction)[tankIndex]
         local selector = candidateSelector(team, tankObjective, tankIndex, "grandop_wait_tank")
         if not tankName or not commands.exec("execute if entity " .. selector) then return end
-        print("Tank selected: " .. faction .. " " .. tankName)
-        commands.exec("/tag " .. selector .. " remove grandop_wait_tank")
+        log("Tank selected: " .. faction .. " " .. tankName)
         commands.exec("/tag " .. selector .. " add grandop_wait_tank_spawn")
+        commands.exec("/tag " .. selector .. " remove grandop_wait_tank")
         tankSpawnBook(area, respawn, faction, team)
     end
 
@@ -329,7 +336,7 @@ function book.run(ctx)
         local spawn = respawn.vehicleSpawns[faction] and respawn.vehicleSpawns[faction][spawnIndex]
         local selector = candidateSelector(team, tankSpawnObjective, spawnIndex, "grandop_wait_tank_spawn", tankObjective, tankIndex)
         if not tankName or not spawn or not commands.exec("execute if entity " .. selector) then return end
-        print("Tank spawn selected: " .. faction .. " " .. tankName .. " -> " .. spawn.name)
+        log("Tank spawn selected: " .. faction .. " " .. tankName .. " -> " .. spawn.name)
         if vehicles.timeToNext(v, faction, tankName) > 0 then
             commands.exec("/tellraw " .. selector .. " {\"text\":\"Tank cooldown active\",\"color\":\"red\"}")
             return

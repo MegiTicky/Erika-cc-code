@@ -190,6 +190,7 @@ local ctx = {
     loadoutData = data,
     stage = stageHub,
     state = state,
+    log = print,
 }
 
 local objectiveEngine
