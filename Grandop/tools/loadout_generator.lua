@@ -15,7 +15,15 @@
 -- Chest contents only record item id + count; the NBT of complex items depends
 -- on the inventory API and mod, so verify generated loadouts in game.
 
-dofile("/lib/bootstrap.lua")
+local function rootRequire(name)
+    if package.loaded[name] then return package.loaded[name] end
+    local chunk, reason = loadfile("/" .. name:gsub("%.", "/") .. ".lua")
+    if not chunk then error("Cannot load /" .. name:gsub("%.", "/") .. ".lua: " .. tostring(reason)) end
+    local result = chunk()
+    package.loaded[name] = result or true
+    return package.loaded[name]
+end
+_G.require = rootRequire
 
 local json = require("lib.json")
 

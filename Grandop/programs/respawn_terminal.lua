@@ -16,7 +16,15 @@ local args = { ... }
 local missionId = args[1]
 if not missionId then error("Usage: respawn_terminal <mission> [country]") end
 
-dofile("/lib/bootstrap.lua")
+local function rootRequire(name)
+    if package.loaded[name] then return package.loaded[name] end
+    local chunk, reason = loadfile("/" .. name:gsub("%.", "/") .. ".lua")
+    if not chunk then error("Cannot load /" .. name:gsub("%.", "/") .. ".lua: " .. tostring(reason)) end
+    local result = chunk()
+    package.loaded[name] = result or true
+    return package.loaded[name]
+end
+_G.require = rootRequire
 
 local mission = require("missions." .. missionId)
 local respawnCfg = mission.respawn
