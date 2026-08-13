@@ -6,6 +6,7 @@ local BRANCH = "main"
 
 local function usage()
     print("Usage: install <repository path> [destination] [--force]")
+    print("       install bundle <manifest path> [--force]")
     print("Example: install Utility/matrix.lua matrix.lua")
 end
 
@@ -32,6 +33,94 @@ local function basename(path)
 end
 
 local sourcePath, destination, force = ...
+
+local function download(source, target, overwrite)
+    if fs.exists(target) and not overwrite then
+        printError("Refusing to overwrite existing file: " .. target)
+        print("Use --force to replace it.")
+        return false
+    end
+
+    local url = "https://raw.githubusercontent.com/" .. REPOSITORY .. "/" .. BRANCH .. "/" .. encodePath(source)
+    print("Downloading " .. source .. "...")
+
+    local response, reason = http.get(url)
+    if not response then
+        printError("Download failed: " .. tostring(reason))
+        return false
+    end
+
+    local status = response.getResponseCode and response.getResponseCode() or 200
+    if status ~= 200 then
+        response.close()
+        printError("Download failed with HTTP status " .. tostring(status))
+        return false
+    end
+
+    local contents = response.readAll()
+    response.close()
+
+    local parent = fs.getDir(target)
+    if parent and parent ~= "" and not fs.exists(parent) then
+        fs.makeDir(parent)
+    end
+
+    local file, openReason = fs.open(target, "w")
+    if not file then
+        printError("Could not write " .. target .. ": " .. tostring(openReason))
+        return false
+    end
+
+    file.write(contents)
+    file.close()
+    print("Installed " .. target)
+    return true
+end
+
+if sourcePath == "bundle" then
+    local manifestPath = destination
+    local overwrite = force == "--force"
+    if not manifestPath or manifestPath == "" then
+        usage()
+        return
+    end
+
+    local manifestUrl = "https://raw.githubusercontent.com/" .. REPOSITORY .. "/" .. BRANCH .. "/" .. encodePath(manifestPath)
+    local response, reason = http.get(manifestUrl)
+    if not response then
+        printError("Manifest download failed: " .. tostring(reason))
+        return
+    end
+
+    local status = response.getResponseCode and response.getResponseCode() or 200
+    if status ~= 200 then
+        response.close()
+        printError("Manifest download failed with HTTP status " .. tostring(status))
+        return
+    end
+
+    local manifest = response.readAll()
+    response.close()
+
+    local installed = 0
+    for line in manifest:gmatch("[^\r\n]+") do
+        line = line:gsub("^%s+", ""):gsub("%s+$", "")
+        if line ~= "" and not line:match("^#") then
+            local source, target = line:match("^([^|]+)|(.+)$")
+            if not source then
+                printError("Invalid manifest line: " .. line)
+                return
+            end
+            source = source:gsub("^%s+", ""):gsub("%s+$", "")
+            target = target:gsub("^%s+", ""):gsub("%s+$", "")
+            if not download(source, target, overwrite) then return end
+            installed = installed + 1
+        end
+    end
+    print("Bundle installed: " .. installed .. " files")
+    return
+end
+
 if not sourcePath or sourcePath == "" then
     usage()
     return
@@ -52,42 +141,4 @@ if not destination or destination == "" then
     return
 end
 
-if fs.exists(destination) and not force then
-    printError("Refusing to overwrite existing file: " .. destination)
-    print("Use --force to replace it.")
-    return
-end
-
-local url = "https://raw.githubusercontent.com/" .. REPOSITORY .. "/" .. BRANCH .. "/" .. encodePath(sourcePath)
-print("Downloading " .. sourcePath .. "...")
-
-local response, reason = http.get(url)
-if not response then
-    printError("Download failed: " .. tostring(reason))
-    return
-end
-
-local status = response.getResponseCode and response.getResponseCode() or 200
-if status ~= 200 then
-    response.close()
-    printError("Download failed with HTTP status " .. tostring(status))
-    return
-end
-
-local contents = response.readAll()
-response.close()
-
-local parent = fs.getDir(destination)
-if parent and parent ~= "" and not fs.exists(parent) then
-    fs.makeDir(parent)
-end
-
-local file, openReason = fs.open(destination, "w")
-if not file then
-    printError("Could not write " .. destination .. ": " .. tostring(openReason))
-    return
-end
-
-file.write(contents)
-file.close()
-print("Installed " .. destination)
+download(sourcePath, destination, force)

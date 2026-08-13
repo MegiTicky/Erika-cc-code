@@ -1,0 +1,5 @@
+# Shared launcher and phase 2 ticket server
+Grandop/run.lua|run
+Grandop/programs/ticket_server.lua|programs/ticket_server.lua
+Grandop/lib/tickets.lua|lib/tickets.lua
+Grandop/missions/lieyu_phase_2.lua|missions/lieyu_phase_2.lua
