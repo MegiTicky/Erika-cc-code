@@ -390,19 +390,6 @@ function book.run(ctx)
         end
     end
 
-    local function refreshBooks(team)
-        local faction = factionForTeam(mission, team)
-        local area = stagingArea(respawn, faction, ctx.stage)
-        if not area then return end
-        factionBook(waitingSelector(team, "grandop_wait_mode"), faction, features.tanks and ctx.radar)
-        classBook(area, data, faction, team)
-        if features.tanks then
-            tankBook(area, faction, team, respawn.tanks)
-            tankSpawnBook(area, respawn, faction, team)
-        end
-        spawnBook(area, respawn, faction, team, ctx.stage)
-    end
-
     while true do
         enableTriggers()
         for team in pairs(teams) do
@@ -432,7 +419,6 @@ function book.run(ctx)
                 end
             end
         end
-        for team in pairs(teams) do refreshBooks(team) end
         sleep(0.2)
     end
 end
