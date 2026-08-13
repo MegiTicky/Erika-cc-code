@@ -10,6 +10,7 @@
 --   run loadout  [loadout_file]      loadout service
 --   run artillery                    artillery server
 --   run gen [path] [side]            generate a loadout JSON from a chest
+--   run event <mission>              complete unified event controller
 --
 -- Example: run objective lieyu_phase_2_5
 
@@ -24,6 +25,7 @@ if not role then
     print("  loadout   [loadout_file]")
     print("  artillery")
     print("  gen       [output_path] [side]")
+    print("  event     <mission>")
     return
 end
 
@@ -43,6 +45,8 @@ elseif role == "artillery" then
     program = "programs/artillery_server"
 elseif role == "gen" then
     program = "tools/loadout_generator"
+elseif role == "event" then
+    program = "programs/event_controller"
 else
     error("Unknown role: " .. tostring(role))
 end

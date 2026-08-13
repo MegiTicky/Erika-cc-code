@@ -181,6 +181,8 @@ return {
     objective = {
         type = "staged_capture",
         stage_channel = 125,
+        localTickets = true,
+        ticketStart = { attack = 500, defense = 500 },
         bossbarId = 1,
         attackTeam = "Red",
         defenseTeam = "Blue",
@@ -226,4 +228,9 @@ return {
     },
 
     respawn = respawn,
+
+    teams = {
+        Red = "japan",
+        Blue = "USMC",
+    },
 }

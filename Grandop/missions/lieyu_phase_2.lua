@@ -19,6 +19,7 @@ local respawn = {
     -- Keep ROM startup unattended. Change these to true for an explicit reset.
     resetTanks = false,
     resetSpawns = false,
+    area = { x = 4293, y = 23, z = 6700, radius = 50 },
     reserve = { x = 1572, y = 90, z = 6280 },
     numPointsX = 3, numPointsZ = 3, spacing = 20,
     spawnRadius = 50,
@@ -206,6 +207,8 @@ return {
     objective = {
         type = "staged_capture",
         stage_channel = 125,
+        localTickets = true,
+        ticketStart = { attack = 500, defense = 500 },
         bossbarId = 1,
         attackTeam = "Blue",
         defenseTeam = "Red",
@@ -246,6 +249,11 @@ return {
             neutralScore = -1,
             skipCooldown = 3,
         },
+    },
+
+    teams = {
+        Blue = "USMC",
+        Red = "japan",
     },
 
     respawn = respawn,

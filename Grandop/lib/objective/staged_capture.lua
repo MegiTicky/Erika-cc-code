@@ -109,7 +109,9 @@ function engine.run(mcfg)
     local function sendTickets(zoneIndex)
         local reward = mcfg.ticketRewards and mcfg.ticketRewards[zoneIndex]
         if reward then
-            if mcfg.ticketComputerId then
+            if mcfg.localTickets then
+                tickets.applyLocal(mcfg.attackTeam, mcfg.defenseTeam, reward.a, reward.d)
+            elseif mcfg.ticketComputerId then
                 rednet.send(mcfg.ticketComputerId, tickets.format(reward.a, reward.d))
             end
         end
@@ -123,7 +125,9 @@ function engine.run(mcfg)
             while true do sleep(2) end
         end
         while true do
-            if mcfg.ticketComputerId then
+            if mcfg.localTickets then
+                tickets.applyLocal(mcfg.attackTeam, mcfg.defenseTeam, 0, -10)
+            elseif mcfg.ticketComputerId then
                 rednet.send(mcfg.ticketComputerId, tickets.format(0, -10))
             end
             sleep(2)
@@ -181,6 +185,10 @@ function engine.run(mcfg)
     end
 
     -- Initial setup
+    if mcfg.localTickets then
+        local starts = mcfg.ticketStart or {}
+        tickets.initialize(mcfg.attackTeam, mcfg.defenseTeam, starts.attack, starts.defense)
+    end
     initBossbar(mcfg, #zones)
     redstone.setOutput("back", false)
     sleep(0.1)

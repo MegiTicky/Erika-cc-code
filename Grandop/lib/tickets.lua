@@ -4,6 +4,12 @@
 
 local tickets = {}
 
+function tickets.initialize(attackTeam, defenseTeam, attackStart, defenseStart)
+    commands.exec("/scoreboard objectives add tickets dummy")
+    commands.exec("/scoreboard players set " .. attackTeam .. " tickets " .. tostring(attackStart or 500))
+    commands.exec("/scoreboard players set " .. defenseTeam .. " tickets " .. tostring(defenseStart or 500))
+end
+
 -- Protocol: a message is "A<atkDelta>D<defDelta>" where a negative value means
 -- tickets are removed, a positive value means they are added.
 function tickets.format(atkDelta, defDelta)
@@ -29,6 +35,10 @@ function tickets.apply(attackTeam, defenseTeam, atkDelta, defDelta)
     end
 
     return true
+end
+
+function tickets.applyLocal(attackTeam, defenseTeam, atkDelta, defDelta)
+    tickets.apply(attackTeam, defenseTeam, atkDelta, defDelta)
 end
 
 -- Read the current ticket values from the scoreboard.
