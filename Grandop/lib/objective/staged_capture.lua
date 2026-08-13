@@ -44,7 +44,7 @@ function engine.run(mcfg)
     local reverseDelay = capture.reverseDelay or 30
 
     local zones = mcfg.captureZones
-    local hub = mcfg.stage_channel and stage.new(mcfg.stage_channel) or nil
+    local hub = (mcfg.stage_channel and not mcfg.stageState) and stage.new(mcfg.stage_channel) or nil
     if hub then stage.open(hub) end
 
     local state = {
@@ -161,6 +161,7 @@ function engine.run(mcfg)
             sleep(reverseDelay)
             mc.title('{"text":"Objective unlocked"}')
             state.zone = nextZone
+            if mcfg.stageState then mcfg.stageState.current = state.zone end
         else
             sendTickets(state.zone)
 
@@ -177,6 +178,7 @@ function engine.run(mcfg)
             end
 
             state.zone = state.zone + 1
+            if mcfg.stageState then mcfg.stageState.current = state.zone end
             if hub then stage.broadcast(hub, state.zone) end
         end
 
@@ -198,6 +200,7 @@ function engine.run(mcfg)
         mc.setblock(zones[i].x, zones[i].y, zones[i].z, "air")
     end
     setBeacon(currentZone())
+    if mcfg.stageState then mcfg.stageState.current = state.zone end
     if hub then stage.broadcast(hub, state.zone) end
 
     local skipCooldown = 0

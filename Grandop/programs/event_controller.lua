@@ -28,12 +28,8 @@ if not objective then error("Mission has no objective config: " .. missionId) en
 if not respawn then error("Mission has no respawn config: " .. missionId) end
 if not respawn.area then error("Mission respawn config needs area: " .. missionId) end
 
-local monitor = peripheral.find("monitor")
 local radar = peripheral.find("sp_radar")
-if not monitor then error("Monitor not found!") end
-if not radar then error("sp_radar not found!") end
-
-rednet.open(objective.rednetSide or "bottom")
+local monitor = peripheral.find("monitor")
 
 local loadout = require("lib.loadout")
 local stage = require("lib.stage_channel")
@@ -56,7 +52,7 @@ end
 
 if respawn.initScoreboard then respawn.initScoreboard(respawn.resetSpawns or false) end
 
-local stageHub = stage.new(objective.stage_channel or 125)
+local stageHub = objective.stageState or { current = objective.startZone or 1 }
 local state = {
     playerTankMap = {},
     tankslugtoID = {},
@@ -91,11 +87,19 @@ local function bookLoop()
 end
 
 local function stageListenerLoop()
-    stage.listener(stageHub)()
+    if objective.stage_channel and not objective.stageState then
+        stage.listener(stageHub)()
+    else
+        while true do sleep(1) end
+    end
 end
 
 local function creativeLoop()
-    creative.run(radar, respawn.creativeZones and respawn.creativeZones("USMC") or { respawn.area }, respawn.creativeRadius or respawn.area.radius)
+    if radar and respawn.creativeZones then
+        creative.run(radar, respawn.creativeZones("USMC"), respawn.creativeRadius or respawn.area.radius)
+    else
+        while true do sleep(1) end
+    end
 end
 
 local tasks = { objectiveLoop, bookLoop, stageListenerLoop, creativeLoop }

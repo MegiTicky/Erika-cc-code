@@ -64,11 +64,13 @@ local function factionClasses(data, faction)
     return result
 end
 
-local function factionBook(cfg, faction, team)
+local function factionBook(cfg, faction, team, allowTanks)
     local mode = {
         { label = "Infantry", command = "/trigger grandop_mode set 1", color = "green" },
-        { label = "Tank", command = "/trigger grandop_mode set 2", color = "gray" },
     }
+    if allowTanks then
+        table.insert(mode, { label = "Tank", command = "/trigger grandop_mode set 2", color = "gray" })
+    end
     giveBook(selectorForTeam(team, cfg.area, "tag=grandop_wait_mode"), "" .. faction .. " Respawn", page(faction .. " Respawn", mode))
 end
 
@@ -169,7 +171,7 @@ function book.run(ctx)
         commands.exec("/scoreboard players set " .. selector .. " " .. modeObjective .. " 0")
         commands.exec("/scoreboard players set " .. selector .. " " .. classObjective .. " 0")
         commands.exec("/scoreboard players set " .. selector .. " " .. spawnObjective .. " 0")
-        factionBook(mission, faction, team)
+        factionBook(mission, faction, team, ctx.radar and ctx.monitor)
     end
 
     local function processMode(team, mode)

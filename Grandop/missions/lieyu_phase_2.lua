@@ -13,6 +13,8 @@ local retreat = {
     townYRetreated = false,
 }
 
+local stageState = { current = 1 }
+
 local respawn = {
     loadout_file = "data/loadouts/lieyu_phase_2.json",
     tankListFile = "tanksList.txt",
@@ -207,6 +209,7 @@ return {
     objective = {
         type = "staged_capture",
         stage_channel = 125,
+        stageState = stageState,
         localTickets = true,
         ticketStart = { attack = 500, defense = 500 },
         bossbarId = 1,
