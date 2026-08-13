@@ -1,0 +1,211 @@
+{
+  "classes": {
+    "japan.assault": {
+      "cooldown": 0,
+      "items": [
+        { "slot": "chest", "item": "combatgear:wwi_chestplate", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "head", "item": "combatgear:pacific_helmet", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "legs", "item": "combatgear:drab_leggings", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "combatgear:rations", "count": 32 },
+        { "item": "pointblank:ribeyrolles", "nbt": "{display:{Name:'{\"text\":\"Type 100\",\"italic\":false}'}}" },
+        { "item": "pointblank:lugerp08", "nbt": "{display:{Name:'{\"text\":\"Nambu pistols\",\"italic\":false}'}}" },
+        { "item": "combatgear:knife" },
+        { "item": "pointblank:ammocreative", "count": 128 },
+        { "item": "smallarm:lunge_mine", "count": 2 },
+        { "item": "cgm:grenade", "count": 3 },
+        { "item": "minecraft:oak_boat" }
+      ]
+    },
+    "japan.engineer": {
+      "cooldown": 0,
+      "items": [
+        { "slot": "chest", "item": "combatgear:wwi_chestplate", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "head", "item": "combatgear:pacific_helmet", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "legs", "item": "combatgear:drab_leggings", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "combatgear:rations", "count": 32 },
+        { "item": "pointblank:htg_m1897" },
+        { "item": "combatgear:knife" },
+        { "item": "pointblank:ammocreative", "count": 32 },
+        { "item": "trackwork:med_phys_track", "count": 8 },
+        { "item": "trackwork:med_suspension_track", "count": 24 },
+        { "item": "create:redstone_link", "count": 64 },
+        { "item": "copycats:copycat_layer", "count": 64 },
+        { "item": "crusty_chunks:sand_bags", "count": 32 },
+        { "item": "minecraft:iron_shovel" },
+        { "item": "combatgear:landmine", "count": 2 },
+        { "item": "vs_tournament:explosive_instant_small", "count": 2 },
+        { "item": "create_tweaked_controllers:tweaked_linked_controller" },
+        { "item": "create:wrench" },
+        { "item": "minecraft:oak_boat" }
+      ]
+    },
+    "japan.medic": {
+      "cooldown": 0,
+      "items": [
+        { "slot": "chest", "item": "combatgear:wwi_chestplate", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "head", "item": "combatgear:pacific_helmet", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "legs", "item": "combatgear:drab_leggings", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "combatgear:rations", "count": 32 },
+        { "item": "pointblank:type38" },
+        { "item": "combatgear:knife" },
+        { "item": "pointblank:ammocreative", "count": 64 },
+        { "item": "smallarm:smoke_grenade", "count": 8 },
+        { "item": "combatgear:bandages", "count": 16 },
+        { "item": "combatgear:medpack", "count": 2 },
+        { "item": "minecraft:snowball", "count": 6, "nbt": "{display:{Name:'{\"text\":\"Heal ball\",\"italic\":false}'},Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "minecraft:oak_boat" }
+      ]
+    },
+    "japan.commander": {
+      "cooldown": 0,
+      "items": [
+        { "slot": "chest", "item": "combatgear:wwi_chestplate", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "head", "item": "combatgear:tankcap_helmet", "nbt": "{Enchantments:[{id:\"minecraft:projectile_protection\",lvl:2s},{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "legs", "item": "combatgear:drab_leggings", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "combatgear:rations", "count": 32 },
+        { "item": "pointblank:type38" },
+        { "item": "pointblank:lugerp08", "nbt": "{display:{Name:'{\"text\":\"Nambu pistols\",\"italic\":false}'}}" },
+        { "item": "combatgear:katanan" },
+        { "item": "pointblank:ammocreative", "count": 128 },
+        { "item": "combatgear:bandages", "count": 8 },
+        { "item": "combatgear:stimpack" },
+        { "item": "minecraft:oak_boat" }
+      ]
+    },
+    "japan.machine_gunner": {
+      "cooldown": 90,
+      "items": [
+        { "slot": "chest", "item": "combatgear:wwi_chestplate", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "head", "item": "combatgear:pacific_helmet", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "legs", "item": "combatgear:drab_leggings", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "combatgear:rations", "count": 32 },
+        { "item": "pointblank:madsen", "nbt": "{display:{Name:'{\"text\":\"Type 97\"}'}}" },
+        { "item": "combatgear:knife" },
+        { "item": "pointblank:ammocreative", "count": 256 },
+        { "cmd": "/effect give @p minecraft:slowness infinite 2" },
+        { "item": "minecraft:oak_boat" }
+      ]
+    },
+    "USMC.assault": {
+      "cooldown": 0,
+      "items": [
+        { "slot": "chest", "item": "crusty_chunks:flame_thrower_tank_chestplate", "nbt": "{Fluid: 1000}" },
+        { "slot": "head", "item": "combatgear:snow_helmet", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "legs", "item": "combatgear:pacific_leggings", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "pointblank:htg_thompson1928" },
+        { "item": "crusty_chunks:flame_thrower_animated" },
+        { "item": "combatgear:knife" },
+        { "item": "combatgear:rations", "count": 8 },
+        { "item": "pointblank:ammocreative", "count": 128 },
+        { "item": "cgm:grenade", "count": 3 }
+      ]
+    },
+    "USMC.engineer": {
+      "cooldown": 0,
+      "items": [
+        { "slot": "chest", "item": "combatgear:pacific_chestplate", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "head", "item": "combatgear:snow_helmet", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "legs", "item": "combatgear:pacific_leggings", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "pointblank:htg_m1897" },
+        { "item": "combatgear:rations", "count": 8 },
+        { "item": "pointblank:ammocreative", "count": 128 },
+        { "item": "trackwork:med_phys_track", "count": 8 },
+        { "item": "trackwork:med_suspension_track", "count": 24 },
+        { "item": "create:redstone_link", "count": 64 },
+        { "item": "copycats:copycat_layer", "count": 64 },
+        { "item": "crusty_chunks:sand_bags", "count": 32 },
+        { "item": "minecraft:iron_shovel" },
+        { "item": "combatgear:knife" },
+        { "item": "vs_tournament:explosive_instant_small", "count": 3 },
+        { "item": "minecraft:tnt", "count": 3 },
+        { "item": "minecraft:lever", "count": 32 }
+      ]
+    },
+    "USMC.medic": {
+      "cooldown": 0,
+      "items": [
+        { "slot": "chest", "item": "combatgear:pacific_chestplate", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "head", "item": "combatgear:snow_helmet", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "legs", "item": "combatgear:pacific_leggings", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "pointblank:m1903" },
+        { "item": "minecraft:snowball", "count": 6, "nbt": "{display:{Name:'{\"text\":\"Heal ball\",\"italic\":false}'},Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "combatgear:knife" },
+        { "item": "combatgear:rations", "count": 32 },
+        { "item": "pointblank:ammocreative", "count": 64 },
+        { "item": "smallarm:smoke_grenade", "count": 8 },
+        { "item": "combatgear:bandages", "count": 16 },
+        { "item": "combatgear:medpack", "count": 2 }
+      ]
+    },
+    "USMC.commander": {
+      "cooldown": 0,
+      "items": [
+        { "slot": "chest", "item": "combatgear:pacific_chestplate", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "head", "item": "combatgear:tankcap_helmet", "nbt": "{Enchantments:[{id:\"minecraft:projectile_protection\",lvl:2s},{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "legs", "item": "combatgear:pacific_leggings", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "pointblank:tw_m1_garand" },
+        { "item": "combatgear:knife" },
+        { "item": "combatgear:rations", "count": 32 },
+        { "item": "pointblank:ammocreative", "count": 128 },
+        { "item": "pointblank:m1911a1" },
+        { "item": "combatgear:bandages", "count": 8 },
+        { "item": "computercraft:computer_advanced", "nbt": "{ComputerId: 0}" },
+        { "item": "computercraft:wireless_modem_advanced" },
+        { "item": "combatgear:stimpack" }
+      ]
+    },
+    "USMC.machine_gunner": {
+      "cooldown": 60,
+      "items": [
+        { "slot": "chest", "item": "combatgear:pacific_chestplate", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "head", "item": "combatgear:snow_helmet", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "legs", "item": "combatgear:pacific_leggings", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "pointblank:barm1918", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "pointblank:ammocreative", "count": 256 },
+        { "item": "combatgear:rations", "count": 32 },
+        { "cmd": "/effect give @p minecraft:slowness infinite 2" }
+      ]
+    },
+    "USMC.anti_tank": {
+      "cooldown": 90,
+      "items": [
+        { "slot": "chest", "item": "combatgear:pacific_chestplate", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "head", "item": "combatgear:snow_helmet", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "legs", "item": "combatgear:pacific_leggings", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
+        { "item": "smallarm:m72_law", "nbt": "{display:{Name:'{\"text\":\"M1 Bazooka\",\"italic\":false}'},AmmoCount:1}" },
+        { "item": "smallarm:m72_law_rocket" },
+        { "item": "pointblank:m1911a1" },
+        { "item": "pointblank:ammocreative", "count": 64 },
+        { "item": "combatgear:rations", "count": 32 }
+      ]
+    }
+  },
+  "repair_kits": [
+    { "item": "combatgear:wwi_chestplate", "count": 1 },
+    { "item": "combatgear:drab_leggings", "count": 1 },
+    { "item": "combatgear:pacific_boots", "count": 1 },
+    { "item": "combatgear:tankcap_helmet", "count": 1 },
+    { "item": "pointblank:ammocreative", "count": 64 },
+    { "item": "pointblank:m1911a1", "count": 1 },
+    { "item": "trackwork:suspension_track", "count": 24 },
+    { "item": "trackwork:phys_track", "count": 8 },
+    { "item": "create:wrench", "count": 1 },
+    { "item": "create_tank_defenses:sandbag", "count": 64 },
+    { "item": "create:shaft", "count": 32 },
+    { "item": "tallyho:scope_block", "count": 2 },
+    { "item": "create:analog_lever", "count": 32 },
+    { "item": "vs_clockwork:gravitron", "count": 1 },
+    { "item": "combatgear:pillsui", "count": 1 }
+  ]
+}

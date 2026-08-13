@@ -124,4 +124,3 @@ while true do
     commands.exec("/spawnpoint @a[team="..attackteam.."] ".. Asp[Gm].x .." "..Asp[Gm].y .." "..Asp[Gm].z)
     commands.exec("/spawnpoint @a[team="..defenseteam.."] ".. Dsp[Gm].x .." "..Dsp[Gm].y .." "..Dsp[Gm].z)
 end
-

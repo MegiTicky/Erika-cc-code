@@ -10,7 +10,7 @@ if not modem then error("Modem (wireless or wired) not found!") end
 monitor.clear()
 monitor.setTextScale(0.5)
 --============--
---Tank related--
+--Table--
 --============--
 local defaultTanksList = {
     germany = {
@@ -19,17 +19,13 @@ local defaultTanksList = {
         panzer4 = { stock = 8, cooldown = 60,  buffer = 9999 }
     },
     allied = {
-        sherman75     = { stock = 11, cooldown = 3, buffer = 1 },
-        shermanfirefly       = { stock = 2, cooldown = 60, buffer = 1 },
-        churchillvii = { stock = 2, cooldown = 60, buffer = 1 }
+        sherman75     = { stock = 11, cooldown = 3, buffer = 1, extraCrewCount = 4 },
+        shermanfirefly       = { stock = 2, cooldown = 60, buffer = 1, extraCrewCount = 4 },
+        churchillvii = { stock = 2, cooldown = 60, buffer = 1, extraCrewCount = 4 }
     },
     japan = {
-        --[[chiha  = { stock = 10, cooldown = 1,  buffer = 1 },
-        chinu  = { stock = 2,  cooldown = 100, buffer = 1 },
-        chihalg= { stock = 1,  cooldown = 120, buffer = 1 },
-        horo   = { stock = 1,  cooldown = 100, buffer = 1 }]]
-        chinu  = { stock = 2, cooldown = 180,  buffer = 1 },
-        horo   = { stock = 1,  cooldown = 180, buffer = 1 }
+        patrolboat   = { stock = 3,  cooldown = 180, buffer = 1, extraCrewCount = 7 },
+        --ataka = {stock = 1, cooldown=1,buffer =1, extraCrewCount = 29}
     },
     USMC = {
         --[[m3gmc         = { stock = 4, cooldown = 1,  buffer = 1 },
@@ -38,83 +34,42 @@ local defaultTanksList = {
         sherman75usmc = { stock = 4, cooldown = 1,  buffer = 1 },
         sherman76 = { stock = 6, cooldown = 60,  buffer = 1 },
         churchill7 = { stock = 1, cooldown = 60,  buffer = 1 }]]
-        sherman75usmc = { stock = 3, cooldown = 180,  buffer = 1 },
+        sherman75usmc = { stock = 3, cooldown = 180,  buffer = 1, extraCrewCount = 4 },
+        p51 = { stock = 1, cooldown = 180,  buffer = 1, extraCrewCount = 0 }
     }
 }
 local repairKits = {
-    { id = "trackwork:suspension_track", count = 64 },
-    { id = "trackwork:phys_track", count = 16 },
+    { id = "combatgear:wwi_chestplate", count = 1},
+    { id = "combatgear:drab_leggings", count = 1},
+    { id = "combatgear:pacific_boots", count = 1},
+    { id = "combatgear:tankcap_helmet", count = 1},
+    { id = "pointblank:ammocreative", count = 64},
+    { id = "pointblank:m1911a1", count = 1},
+    { id = "trackwork:suspension_track", count = 24 },
+    { id = "trackwork:phys_track", count = 8 },
     { id = "create:wrench", count = 1 },
-    { id = "create:copycat_panel", count = 64 },
-    { id = "s_a_b:hardsteelblockpanzer", count = 64 },
+    { id = "create_tank_defenses:sandbag", count = 64 },
     { id = "create:shaft", count = 32 },
     { id = "tallyho:scope_block", count = 2 },
     { id = "create:analog_lever", count = 32 },
     { id = "vs_clockwork:gravitron", count = 1 },
     { id = "combatgear:pillsui", count = 1}    
 }
-
--- Reserve area
-local reserveCord = {
-    x = 1572,
-    y = 90,
-    z = 6280
-}
--- Map of players and their current tank
-local playerTankMap = {}
-local availableTanks = {}
-
--- Define point grid
-local numPointsX = 3  -- adjust how many points in X
-local numPointsZ = 3  -- adjust how many points in Z
-local spacing = 20    -- distance between points
-
---========--
---infantry--
---========--
-local infantrySpawns = {
+local defaultCoords = {
     germany = {
-        [1] = { {name="G_S1 Trench", x=5800,y=40,z=6500}, {name="G_S1 Forest", x=5825,y=40,z=6520} },
-        [2] = { {name="G_S2 Ruins",  x=5930,y=42,z=6600}, {name="G_S2 Road",   x=5960,y=42,z=6630} },
+        { name = "Main", x = 5847, y = 38, z = 6540 ,useGrid = true }
     },
     allied = {
-        [1] = { {name="A_S1 Beach",  x=7080,y=28,z=6460}, {name="A_S1 Cliff",  x=7110,y=30,z=6485} },
-        [2] = { {name="A_S2 Depot",  x=7200,y=29,z=6550}, {name="A_S2 Yard",   x=7230,y=29,z=6575} },
+        { name = "Main", x = 7094, y = 28, z = 6473 ,useGrid = true }
     },
     japan = {
-        [1] = { {name="Town X",  x=4836,y=20,z=6160}, {name="Town Y",  x=4711,y=17,z=5925}, {name="Town Z", x=4815, y=29, z=5561} },
-        [2] = { {name="Town X",  x=4836,y=20,z=6160}, {name="Town Y",  x=4711,y=17,z=5925}, {name="Town Z", x=4815, y=29, z=5561} },
-        [3] = { {name="Town X",  x=4836,y=20,z=6160}, {name="Town Y",  x=4711,y=17,z=5925}, {name="Town Z", x=4815, y=29, z=5561} }
+        { name = "Sea", x = 4269, y = 3, z = 5261 ,useGrid = true },
     },
     USMC = {
-        [1] = { {name="S1 Main Town",  x=4592,y=18,z=6411}, {name="USCommander",  x=0,y=0,z=0} },
-        [2] = { {name="S2 Town X",  x=4825,y=19,z=6149}, {name="USCommander",  x=0,y=0,z=0} },
-        [3] = { {name="S3 Town Y",  x=4735,y=20,z=5881}, {name="USCommander",  x=0,y=0,z=0} }
-
+        { name = "Tank spawn", x = 4293, y = 23, z = 6700 ,useGrid = true},
+        {name = "Aircraft spawn", x = 3980, y = 22, z = 8162, useGrid = false }
     }
 }
-
-local townRespawnQuota = {
-    ["Town X"] = 30,
-    ["Town Y"] = 30,
-    ["Town Z"] = 40
-}
-
--- Keep track of the number of respawns per town
-local townRespawnCount = {
-    ["Town X"] = 0,
-    ["Town Y"] = 0,
-    ["Town Z"] = 0
-}
-
--- Global respawn quota for USMC (maximum of 100 respawns anywhere)
-local USMCRespawnQuota = 100
-local USMCRespawnCount = 0
-
---=== infantry classes & kits ===--
-local infantryClasses = { "assault","engineer","medic","commander","machine_gunner" }
-
--- Put your real items here. Examples are placeholders.
 local infantryKitsWithCooldown = {
     japan = {
         assault = {
@@ -126,14 +81,16 @@ local infantryKitsWithCooldown = {
             -- Food
             "/give @p combatgear:rations 32",
             -- Main Weapon
-            "/give @p pointblank:type38",
-            -- Secondary Weapon (Knife)
+            "/give @p pointblank:ribeyrolles{display:{Name:'{\"text\":\"Type 100\",\"italic\":false}'}}",
+            -- Secondary Weapon
+            "/give @p pointblank:lugerp08{display:{Name:'{\"text\":\"Nambu pistols\",\"italic\":false}'}}",
             "/give @p combatgear:knife",
             -- Ammo
-            "/give @p pointblank:ammocreative 64",
+            "/give @p pointblank:ammocreative 128",
             -- Special Gadgets
-            "/give @p smallarm:lunge_mine",
+            "/give @p smallarm:lunge_mine 2",
             "/give @p cgm:grenade 3",
+            "/give @p minecraft:oak_boat",
             cooldown = 0  -- Cooldown in seconds
         },
         engineer = {
@@ -145,11 +102,11 @@ local infantryKitsWithCooldown = {
             -- Food
             "/give @p combatgear:rations 32",
             -- Main Weapon
-            "/give @p pointblank:type38",
+            "/give @p pointblank:htg_m1897",
             -- Secondary Weapon (Knife)
             "/give @p combatgear:knife",
             -- Ammo
-            "/give @p pointblank:ammocreative 64",
+            "/give @p pointblank:ammocreative 32",
             -- Special Gadgets
             "/give @p trackwork:med_phys_track 8",
             "/give @p trackwork:med_suspension_track 24",
@@ -161,6 +118,7 @@ local infantryKitsWithCooldown = {
             "/give @p vs_tournament:explosive_instant_small 2",
             "/give @p create_tweaked_controllers:tweaked_linked_controller",
             "/give @p create:wrench",
+            "/give @p minecraft:oak_boat",
             cooldown = 0  -- Cooldown in seconds
         },
         medic = {
@@ -172,16 +130,17 @@ local infantryKitsWithCooldown = {
             -- Food
             "/give @p combatgear:rations 32",
             -- Main Weapon
-            "/give @p pointblank:ribeyrolles{display:{Name:'{\"text\":\"Type 100\",\"italic\":false}'}}",
+            "/give @p pointblank:type38",
             -- Secondary Weapon (Knife)
             "/give @p combatgear:knife",
             -- Ammo
-            "/give @p pointblank:ammocreative 128",
+            "/give @p pointblank:ammocreative 64",
             -- Special Gadgets
             "/give @p smallarm:smoke_grenade 8",
             "/give @p combatgear:bandages 16",
             "/give @p combatgear:medpack 2",
             "/give @p minecraft:snowball{display:{Name:'{\"text\":\"Heal ball\",\"italic\":false}'},Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]} 6",
+            "/give @p minecraft:oak_boat",
             cooldown = 0  -- Cooldown in seconds
         },
         commander = {
@@ -195,13 +154,14 @@ local infantryKitsWithCooldown = {
             -- Main Weapon
             "/give @p pointblank:type38",
             -- Secondary Weapon (Luger P08 for Commander)
-            "/give @p pointblank:lugerp08",
+            "/give @p pointblank:lugerp08{display:{Name:'{\"text\":\"Nambu pistols\",\"italic\":false}'}}",
             "/give @p combatgear:katanan",
             -- Ammo
             "/give @p pointblank:ammocreative 128",
             -- Special Gadgets
             "/give @p combatgear:bandages 8",
             "/give @p combatgear:stimpack",
+            "/give @p minecraft:oak_boat",
             cooldown = 0  -- Cooldown in seconds
         },
         machine_gunner = {
@@ -220,6 +180,7 @@ local infantryKitsWithCooldown = {
             "/give @p pointblank:ammocreative 256",
             -- Special Gadgets
             "/effect give @p minecraft:slowness infinite 2",
+            "/give @p minecraft:oak_boat",
             cooldown = 90  -- Cooldown in seconds
         }
     },
@@ -229,11 +190,11 @@ local infantryKitsWithCooldown = {
             "/item replace entity @p armor.head with combatgear:snow_helmet{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}",
             "/item replace entity @p armor.legs with combatgear:pacific_leggings{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}",
             "/item replace entity @p armor.feet with combatgear:pacific_boots{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}",
-            "/give @p pointblank:tw_m1_garand",
+            "/give @p pointblank:htg_thompson1928",
             "/give @p crusty_chunks:flame_thrower_animated",
             "/give @p combatgear:knife",
             "/give @p combatgear:rations 8",
-            "/give @p pointblank:ammocreative 64",
+            "/give @p pointblank:ammocreative 128",
             "/give @p cgm:grenade 3",
             cooldown = 0  -- Cooldown in seconds
         },
@@ -242,7 +203,7 @@ local infantryKitsWithCooldown = {
             "/item replace entity @p armor.head with combatgear:snow_helmet{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}",
             "/item replace entity @p armor.legs with combatgear:pacific_leggings{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}",
             "/item replace entity @p armor.feet with combatgear:pacific_boots{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}",
-            "/give @p pointblank:htg_thompson1928",
+            "/give @p pointblank:htg_m1897",
             "/give @p combatgear:rations 8",
             "/give @p pointblank:ammocreative 128",
             "/give @p trackwork:med_phys_track 8",
@@ -262,11 +223,11 @@ local infantryKitsWithCooldown = {
             "/item replace entity @p armor.head with combatgear:snow_helmet{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}",
             "/item replace entity @p armor.legs with combatgear:pacific_leggings{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}",
             "/item replace entity @p armor.feet with combatgear:pacific_boots{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}",
-            "/give @p pointblank:htg_thompson1928",
+            "/give @p pointblank:m1903",
             "/give @p minecraft:snowball{display:{Name:'{\"text\":\"Heal ball\",\"italic\":false}'},Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]} 6",
             "/give @p combatgear:knife",
             "/give @p combatgear:rations 32",
-            "/give @p pointblank:ammocreative 128",
+            "/give @p pointblank:ammocreative 64",
             "/give @p smallarm:smoke_grenade 8",
             "/give @p combatgear:bandages 16",
             "/give @p combatgear:medpack 2",
@@ -313,7 +274,43 @@ local infantryKitsWithCooldown = {
         }
     }
 }
+local infantrySpawns = {
+    germany = {
+        [1] = { {name="G_S1 Trench", x=5800,y=40,z=6500}, {name="G_S1 Forest", x=5825,y=40,z=6520} },
+        [2] = { {name="G_S2 Ruins",  x=5930,y=42,z=6600}, {name="G_S2 Road",   x=5960,y=42,z=6630} },
+    },
+    allied = {
+        [1] = { {name="A_S1 Beach",  x=7080,y=28,z=6460}, {name="A_S1 Cliff",  x=7110,y=30,z=6485} },
+        [2] = { {name="A_S2 Depot",  x=7200,y=29,z=6550}, {name="A_S2 Yard",   x=7230,y=29,z=6575} },
+    },
+    japan = {
+        [1] = { {name="Base spawn", x = 4264, y = 2, z = 5260 }, {name="JPCommander", x=0,y=0,z=0} },
+        [2] = { {name="Objective A", x = 4443, y = 10, z = 5545 }, {name="JPCommander", x=0,y=0,z=0} },
+        [3] = { {name="Objective B", x = 4582, y = 11, z = 5651 }, {name="JPCommander", x=0,y=0,z=0} },
+        [4] = { {name="Objective C", x = 4688, y = 14, z = 5654 }, {name="JPCommander", x=0,y=0,z=0} },
+        [5] = { {name="Objective D", x = 4780, y = 26, z = 5621 }, {name="JPCommander", x=0,y=0,z=0} }
+    },
+    USMC = {
+        [1] = { {name="Objective B",  x = 4512, y = 9, z = 5608}, {name="USCommander",  x=0,y=0,z=0} },
+        [2] = { {name="Objective C",  x = 4653, y = 13, z = 5658}, {name="USCommander",  x=0,y=0,z=0} },
+        [3] = { {name="Objective D",  x = 4780, y = 26, z = 5621}, {name="USCommander",  x=0,y=0,z=0} },
+        [4] = { {name="Objective E",  x = 4841, y = 30, z = 5546}, {name="USCommander",  x=0,y=0,z=0} },
+        [5] = { {name="Base spawn",  x=4809,y=27,z=5481}, {name="USCommander",  x=0,y=0,z=0} }
+
+    }
+}
+local reserveCord = {
+    x = 1572,
+    y = 90,
+    z = 6280
+}
+-- Empty table
 local kitCooldowns = {}
+local playerTankMap = {}
+local availableTanks = {}
+-- Define point grid
+local numPointsX,numPointsZ,spacing = 3,3,20  -- adjust how many points in X
+local USMCRespawnQuota,USMCRespawnCount,JPRespawnQuota,JPRespawnCount = 100,0,100,0
 
 --===============--
 --helper function--
@@ -385,13 +382,16 @@ local function getClosestUserName()
     end
 end
 
+-- Function to calculate the Euclidean distance between two 3D points
+function calculateDistance(x1, y1, z1, x2, y2, z2)
+    return math.sqrt((x2 - x1)^2 + (y2 - y1)^2 + (z2 - z1)^2)
+end
+
 --=== modem / stage ===--
-
-
-local STAGE_CHANNEL = 125     -- <-- set this to match your capture broadcaster
-modem.open(STAGE_CHANNEL)
-local currentStage = 1
 local function listenStage()
+    STAGE_CHANNEL = 125     -- <-- set this to match your capture broadcaster
+    modem.open(STAGE_CHANNEL)
+    currentStage = 1
     while true do
         local ev, side, ch, rch, msg = os.pullEvent("modem_message")
         if ch == STAGE_CHANNEL then
@@ -415,7 +415,6 @@ local function saveTanksListToFile(filename, tanksList)
     file.write(textutils.serialize(tanksList))
     file.close()
 end
-
 -- Function to load tanksList from a file
 local function loadTanksListFromFile(filename)
     if fs.exists(filename) then
@@ -427,7 +426,6 @@ local function loadTanksListFromFile(filename)
         return nil  -- Return nil if the file doesn't exist
     end
 end
-
 intializeSpawnInfantrySpawn = false
 -- Function to prompt the user for a reset option
 local function promptReset()
@@ -451,61 +449,43 @@ local function promptReset()
         print("Loading the existing spawn count")
     end
 end
-
--- Prompt for reset at the start of the program
 promptReset()
-
 -- Load the tanksList from the file if it exists
-local tanksList = loadTanksListFromFile("tanksList.txt") or defaultTanksList
+tanksList = loadTanksListFromFile("tanksList.txt") or defaultTanksList
 --===========--
 --Setup phase--
 --===========--
 print("=== Tank Teleportation System ===")
 -- Get the list of countries dynamically from tanksList
-local countries = {}
-for country, _ in pairs(tanksList) do
-    table.insert(countries, country)
-end
-
 local country = nil
-repeat
-    print("Select your country:")
-
-    -- Display country options
-    for i, country in ipairs(countries) do
-        print(i .. ". " .. country)
+local function countryInput()
+    local countries = {}
+    for country, _ in pairs(tanksList) do
+        table.insert(countries, country)
     end
+    repeat
+        print("Select your country:")
 
-    io.write("Enter a number from 1 to " .. #countries .. ": ")
-    local input = io.read()
-    local selectedIndex = tonumber(input)
+        -- Display country options
+        for i, country in ipairs(countries) do
+            print(i .. ". " .. country)
+        end
 
-    -- Check if the input is valid
-    if selectedIndex and selectedIndex >= 1 and selectedIndex <= #countries then
-        country = countries[selectedIndex]
-        print("You selected " .. country)
-    else
-        print("Invalid selection! Please choose a valid number from the list.")
-    end
-until country
+        io.write("Enter a number from 1 to " .. #countries .. ": ")
+        local input = io.read()
+        local selectedIndex = tonumber(input)
 
+        -- Check if the input is valid
+        if selectedIndex and selectedIndex >= 1 and selectedIndex <= #countries then
+            country = countries[selectedIndex]
+            print("You selected " .. country)
+        else
+            print("Invalid selection! Please choose a valid number from the list.")
+        end
+    until country
+end
+countryInput()
 
-local defaultCoords = {
-    germany = {
-        { name = "Main", x = 5847, y = 38, z = 6540 }
-    },
-    allied = {
-        { name = "Main", x = 7094, y = 28, z = 6473 }
-    },
-    japan = {
-        { name = "S1 Town Spawn", x = 6068, y = 27, z = 5417 },
-        { name = "S2 Hill Top", x = 5401, y = 62, z = 4658 },
-        { name = "S3 West Plane", x = 4747, y = 21, z = 4602 }
-    },
-    USMC = {
-        { name = "Main spawn", x = 4293, y = 23, z = 6700 }
-    }
-}
 
 local function generateGridPoints(centerX, centerY, centerZ)
     local result = {}
@@ -587,15 +567,7 @@ local function manageCreativeArea()
     local radius = 50
 
     -- Build a flat list of all possible creative areas
-    local creativeZones = {}
-    for _, point in ipairs(defaultCoords[country]) do
-        table.insert(creativeZones, {
-            name = point.name,
-            x = point.x,
-            y = point.y,
-            z = point.z
-        })
-    end
+    local creativeZones = {{ name = "Main spawn", x = 4293, y = 23, z = 6700 }}
 
     while true do
         local radarResult = radar.scanForPlayers(9999)
@@ -636,6 +608,123 @@ local function manageCreativeArea()
         sleep(1)
     end
 end
+
+--=======--
+--Tank Infantry TP--
+--=======--
+oldTankScan,newTankScan = {},{}
+tankslugtoID = {}
+
+-- Function to filter out ships that are within the specified horizontal range of the spawn coordinate
+function tankInSpawnFilter(result, spawnCoord, range)
+    local filteredShips = {}
+    
+    for _, ship in ipairs(result) do
+        -- Assuming each ship in 'result' has x, y, z coordinates in the format {x = _, y = _, z = _}
+        local x, y, z = ship.pos.x, ship.pos.y, ship.pos.z
+        
+        -- Calculate the horizontal distance from the spawn point to the ship (ignores the vertical distance)
+        local horizontalDistance = math.sqrt((spawnCoord.x - x)^2 + (spawnCoord.z - z)^2)
+        
+        -- If the horizontal distance is within the specified range, add the ship to the filtered list
+        if horizontalDistance <= range then
+            table.insert(filteredShips, ship)
+        end
+    end
+    
+    -- Return the filtered list of ships
+    return filteredShips
+end
+
+function filterNewlySpawnedShip(oldList,newList)
+    -- Function to check if a ship exists in a list (based on coordinates)
+    function shipExistsInList(ship, list)
+        for _, existingShip in ipairs(list) do
+            if existingShip.id == ship.id then
+                return true
+            end
+        end
+        return false
+    end
+    local highestMassShip = nil
+
+    for _, newShip in ipairs(newList) do
+        -- Check if the ship is not in the old list
+        if not shipExistsInList(newShip, oldList) then
+            -- If there is no highest mass ship yet, or the current ship has a higher mass, update
+            if not highestMassShip or newShip.mass > highestMassShip.mass then
+                highestMassShip = newShip
+            end
+        end
+    end
+    -- Return the ship with the highest mass or nil if no ship was found
+    return highestMassShip
+end
+-- Function to update crewSpawnLeft after respawn
+local function updateCrewSpawnLeft(tankName)
+    if tankslugtoID[tankName] then
+        local tankData = tankslugtoID[tankName]
+        if tankData.crewSpawnLeft > 0 then
+            tankData.crewSpawnLeft = tankData.crewSpawnLeft - 1  -- Decrease the remaining crew spawn count
+            -- Optionally update the tankslugtoID with the new crew spawn count
+            tankslugtoID[tankName] = tankData
+        end
+    end
+end
+-- Function to continuously monitor tanks for damage and decrease crew spawns when mass drops
+local function decreaseCrewWhenHit()
+    -- Table to remember last known masses
+    local lastMassData = {}
+
+    while true do
+        local scanResult = radar.scanForShips(9999)
+
+        if scanResult then
+            for tankName, tankData in pairs(tankslugtoID) do
+                local tankId = tankData.id
+
+                -- Find this tank in the radar scan result
+                local currentShip = nil
+                for _, ship in ipairs(scanResult) do
+                    if ship.id == tankId then
+                        currentShip = ship
+                        break
+                    end
+                end
+
+                print(currentShip.mass, lastMassData[tankId])
+                if currentShip and currentShip.mass and currentShip.mass > 0 then
+                    local lastMass = lastMassData[tankId] or currentShip.mass
+                    local massLoss = lastMass - currentShip.mass
+                    print(lastMass)
+                    print(massLoss)
+
+                    if massLoss > 0 then
+                        print(massLoss)
+
+                        local lossPercent = (massLoss / lastMass)
+                        if lossPercent > 0 then
+                            -- Calculate how many crew spawns to remove based on the loss percent
+                            local crewToLose = math.max(math.floor(tankData.crewSpawnLeft * lossPercent + 0.5),1)
+                            if crewToLose > 0 then
+                                tankData.crewSpawnLeft = math.max(tankData.crewSpawnLeft - crewToLose, 0)
+                                tankslugtoID[tankName] = tankData
+                                print(string.format("[Damage] %s lost %.1f%% mass, -%d crew spawns (now %d)",
+                                    tankName, lossPercent * 100, crewToLose, tankData.crewSpawnLeft))
+                            end
+                        end
+                    end
+
+                    -- Update last known mass
+                    lastMassData[tankId] = currentShip.mass
+                end
+            end
+        end
+
+        sleep(1)  -- Adjust frequency as needed
+    end
+end
+
 --=================--
 --infantry function--
 --=================--
@@ -670,7 +759,6 @@ local function selectMode()
         if y == yInf  and x >= 2 and x <= 12 then return "infantry" end
     end
 end
-
 -- Function to check if a specific kit is ready to use
 local function isKitReady(kitName)
     local currentTime = os.epoch("utc") / 1000  -- Current time in seconds
@@ -701,7 +789,6 @@ local function useKit(kitName)
         end
     end
 end
-
 -- Function to display the cooldown status of the selected kit
 local function displayKitCooldownStatus(kitName)
     monitor.clear()
@@ -723,7 +810,6 @@ local function displayKitCooldownStatus(kitName)
         sleep(2)
     end
 end
-
 -- Function to select Infantry class and show cooldown status
 local function selectInfantryClass()
     monitor.clear()
@@ -773,49 +859,23 @@ local function handleInfantryKit(player, class)
         print(class .. " kit is on cooldown. Please wait.")
     end
 end
-
-if intializeSpawnInfantrySpawn then
-    -- Create the 'spawnCount' scoreboard
-    commands.exec("/scoreboard objectives add spawnCount dummy")
-
-    -- Create the teams for each country/town
-    commands.exec("/team add USMC")
-    commands.exec("/team add TownX_JP")
-    commands.exec("/team add TownY_JP")
-    commands.exec("/team add TownZ_JP")
-    -- Initialize the spawn count for each team (set initial spawn count to 0)
-    commands.exec("/scoreboard players set USMC spawnCount 0")
-    commands.exec("/scoreboard players set TownX_JP spawnCount 0")
-    commands.exec("/scoreboard players set TownY_JP spawnCount 0")
-    commands.exec("/scoreboard players set TownZ_JP spawnCount 0")
-end
-
 -- Function to check if a country/town has respawn quota remaining based on the scoreboard
-local function hasRespawnQuota(country, townName)
+local function hasRespawnQuota(country)
     local remainingQuota = 0
-    local _,_,XSpawnCount = commands.exec("/scoreboard players get TownX_JP spawnCount")
-    local _,_,YSpawnCount = commands.exec("/scoreboard players get TownY_JP spawnCount")
-    local _,_,ZSpawnCount = commands.exec("/scoreboard players get TownZ_JP spawnCount")
+    local _,_,JPRespawnCount = commands.exec("/scoreboard players get JP spawnCount")
     local _,_,USMCSpawnCount = commands.exec("/scoreboard players get USMC spawnCount")
     if country == "USMC" then
         -- Get the current spawn count for the USMC team
         remainingQuota = USMCRespawnQuota - USMCSpawnCount
-    elseif townName == "Town X" then
+    elseif country == "japan" then
         -- Get the current spawn count for the respective town team
-        remainingQuota = townRespawnQuota[townName] - XSpawnCount
-    elseif townName == "Town Y" then
-        -- Get the current spawn count for the respective town team
-        remainingQuota = townRespawnQuota[townName] - YSpawnCount
-    elseif townName == "Town Z" then
-        -- Get the current spawn count for the respective town team
-        remainingQuota = townRespawnQuota[townName] - ZSpawnCount
+        remainingQuota = JPRespawnQuota - JPRespawnCount
     end
 
     return remainingQuota > 0
 end
-
 -- Function to decrement the respawn count using the scoreboard
-local function decrementRespawnQuota(country, townName)
+local function decrementRespawnQuota(country)
     if country == "USMC" then
         local _,_,currentCount = commands.exec("/scoreboard players get USMC spawnCount")
         if currentCount < USMCRespawnQuota then
@@ -827,25 +887,15 @@ local function decrementRespawnQuota(country, townName)
             print("Respawn limit for USMC reached")
             return false
         end
-    else
-        local currentCount
-        if townName == "Town X" then _,_,currentCount = commands.exec("/scoreboard players get TownX_JP spawnCount") end
-        if townName == "Town Y" then _,_,currentCount = commands.exec("/scoreboard players get TownY_JP spawnCount") end
-        if townName == "Town Z" then _,_,currentCount = commands.exec("/scoreboard players get TownZ_JP spawnCount") end
-
-        if currentCount < townRespawnQuota[townName] then
-            -- Increment the spawn count for the respective town
-            if townName == "Town X" then
-                commands.exec("/scoreboard players add TownX_JP spawnCount 1")
-            elseif townName == "Town Y" then
-                commands.exec("/scoreboard players add TownY_JP spawnCount 1")
-            elseif townName == "Town Z" then
-                commands.exec("/scoreboard players add TownZ_JP spawnCount 1")
-            end
-            print("Increasing spawn count for " .. townName)
+    elseif country == "japan" then
+        local _,_,currentCount = commands.exec("/scoreboard players get JP spawnCount")
+        if currentCount < JPRespawnQuota then
+            -- Increment the spawn count for USMC
+            commands.exec("/scoreboard players add JP spawnCount 1")
+            print("Increasing spawn count for JP")
             return true
         else
-            print("Respawn limit for " .. townName .. " reached")
+            print("Respawn limit for JP reached")
             return false
         end
     end
@@ -857,38 +907,80 @@ local function resetTownRespawnQuota(townName)
     print("Respawn quota for " .. townName .. " has been reset")
 end
 
-commands.exec("/scoreboard objectives add Troops_Strength dummy")
-commands.exec("/scoreboard objectives setdisplay sidebar Troops_Strength")
-commands.exec("/team add USMCSpawn")
-commands.exec("/team add TownX_JPSpawn")
-commands.exec("/team add TownY_JPSpawn")
-commands.exec("/team add TownZ_JPSpawn")
-local _,_,XSpawnCountTemp = commands.exec("/scoreboard players get TownX_JP spawnCount")
-local _,_,YSpawnCountTemp = commands.exec("/scoreboard players get TownY_JP spawnCount")
-local _,_,ZSpawnCountTemp = commands.exec("/scoreboard players get TownZ_JP spawnCount")
-local _,_,USMCSpawnCountTemp = commands.exec("/scoreboard players get USMC spawnCount")
-commands.exec("/scoreboard players set USMCSpawn Troops_Strength " .. (USMCRespawnQuota - USMCSpawnCountTemp))
-commands.exec("/scoreboard players set TownX_JPSpawn Troops_Strength " .. (townRespawnQuota["Town X"] - XSpawnCountTemp))
-commands.exec("/scoreboard players set TownY_JPSpawn Troops_Strength " .. (townRespawnQuota["Town Y"] - YSpawnCountTemp))
-commands.exec("/scoreboard players set TownZ_JPSpawn Troops_Strength " .. (townRespawnQuota["Town Z"] - ZSpawnCountTemp))
+local function initializeScoreboard()
+    if intializeSpawnInfantrySpawn then
+        -- Create the 'spawnCount' scoreboard
+        commands.exec("/scoreboard objectives add spawnCount dummy")
+        -- Create the teams for each country/town
+        commands.exec("/team add USMC")
+        commands.exec("/team add JP")
+        commands.exec("/team add USReinforcement")
+        
+        -- Initialize the spawn count for each team (set initial spawn count to 0)
+        commands.exec("/scoreboard players set USMC spawnCount 0")
+        commands.exec("/scoreboard players set JP spawnCount 0")
+        commands.exec("/scoreboard players set USReinforcement Troops_Strength 420")
+    end
+
+    commands.exec("/scoreboard objectives add Troops_Strength dummy")
+    commands.exec("/scoreboard objectives setdisplay sidebar Troops_Strength")
+    commands.exec("/team add USMCSpawn")
+    commands.exec("/team add JPSpawn")
+    commands.exec("/team add USReinforcement")
+
+    local _,_,JPSpawnCountTemp = commands.exec("/scoreboard players get JP spawnCount")
+    local _,_,USMCSpawnCountTemp = commands.exec("/scoreboard players get USMC spawnCount")
+    commands.exec("/scoreboard players set USMCSpawn Troops_Strength " .. (USMCRespawnQuota - USMCSpawnCountTemp))
+    commands.exec("/scoreboard players set JPSpawn Troops_Strength " .. (JPRespawnQuota - JPSpawnCountTemp))
+    
+end
+initializeScoreboard()
 
 local function displayScoreboard()
     -- Show the remaining respawn counts for each team
-    local _,_,XSpawnCount = commands.exec("/scoreboard players get TownX_JP spawnCount")
-    local _,_,YSpawnCount = commands.exec("/scoreboard players get TownY_JP spawnCount")
-    local _,_,ZSpawnCount = commands.exec("/scoreboard players get TownZ_JP spawnCount")
+    local _,_,JPRespawnCount = commands.exec("/scoreboard players get JP spawnCount")
     local _,_,USMCSpawnCount = commands.exec("/scoreboard players get USMC spawnCount")
     commands.exec("/scoreboard players set USMCSpawn Troops_Strength " .. (USMCRespawnQuota - USMCSpawnCount))
-    commands.exec("/scoreboard players set TownX_JPSpawn Troops_Strength " .. (townRespawnQuota["Town X"] - XSpawnCount))
-    commands.exec("/scoreboard players set TownY_JPSpawn Troops_Strength " .. (townRespawnQuota["Town Y"] - YSpawnCount))
-    commands.exec("/scoreboard players set TownZ_JPSpawn Troops_Strength " .. (townRespawnQuota["Town Z"] - ZSpawnCount))
+    commands.exec("/scoreboard players set JPSpawn Troops_Strength " .. (JPRespawnQuota - JPRespawnCount))
 end
 displayScoreboard()
--- Function to select an infantry spawn point
+--2.5Specific
+local function adjustKitCooldowns(change)
+    -- Iterate through all the USMC kits and add 60 seconds to their cooldown
+    for class, kit in pairs(infantryKitsWithCooldown["USMC"]) do
+        local currentCooldown = kit.cooldown
+        kit.cooldown = currentCooldown + change
+        print(class .. " kit cooldown increased to " .. kit.cooldown .. "s")
+    end
+end
+reinforcement_arrived = false
+startCountDown = false
+
+adjustKitCooldowns(60)
+local function countDownReinforcement()
+    while true do
+        if country == "USMC" and startCountDown then
+            local _,_,USReinforcementTimer = commands.exec("/scoreboard players get USReinforcement Troops_Strength")
+            if USReinforcementTimer < 1 then
+                if reinforcement_arrived == false then
+                    reinforcement_arrived = true
+                    print("Reinforcement arrived, changing spawn")
+                    adjustKitCooldowns(-60)
+                    commands.exec("/title @a title \"US Reinforcement arrived\"")
+                end
+                commands.exec("/scoreboard players set USReinforcement Troops_Strength 0")
+            else
+                commands.exec("/scoreboard players remove USReinforcement Troops_Strength 1")
+            end
+        end
+        sleep(1)
+    end
+end
+
+-- Function to select an infantry spawn point, including tanks
 local function selectInfantrySpawn()
     while true do
         monitor.clear()
-
         -- Display the spawn quota on the scoreboard
         displayScoreboard()
 
@@ -900,13 +992,25 @@ local function selectInfantrySpawn()
         printMonitor("Select Infantry Spawn (Stage "..tostring(currentStage).."):")
         y = y + 2
 
-        -- Display available spawn points
+        -- Display available spawn points from infantrySpawns
         for i, p in ipairs(infantrySpawns[country][currentStage]) do
             -- Check if the town has remaining respawns
-            if hasRespawnQuota(country, p.name) then
+            if hasRespawnQuota(country) then
                 monitor.setCursorPos(2, y)
                 monitor.write(("[%s]  (%d,%d,%d)"):format(p.name, p.x, p.y, p.z))
                 rowMap[y] = p
+                y = y + 2
+            end
+        end
+
+        -- Add tanks to spawn options from tankslugtoID if they have crew spawn left
+        for tankName, tankData in pairs(tankslugtoID) do
+            -- Only show tanks that have remaining crew spawns and if there's a respawn quota available
+            if tankData.crewSpawnLeft > 0 and hasRespawnQuota(country) then
+                monitor.setCursorPos(2, y)
+                -- Display the tank name and the number of crew spawns left
+                monitor.write(("[%s] %d SpawnLeft"):format(tankName, tankData.crewSpawnLeft))
+                rowMap[y] = tankName  -- Store tank name in rowMap
                 y = y + 2
             end
         end
@@ -940,12 +1044,20 @@ local function selectInfantrySpawn()
         -- Handle Spawn selection
         elseif rowMap[ry] then
             local selectedSpawn = rowMap[ry]
-            local townName = selectedSpawn.name
-            if decrementRespawnQuota(country, townName) then
-                return selectedSpawn
+            
+            -- If a tank is selected, treat it as a tank spawn
+            if tankslugtoID[selectedSpawn] then
+                -- Do something with the selected tank name (e.g., respawn on the tank)
+                updateCrewSpawnLeft(selectedSpawn)
+                return {name = selectedSpawn, type = "vehicle"}
             else
-                printMonitor("Respawn limit for " .. townName .. " reached!")
-                sleep(2)
+                local townName = selectedSpawn.name
+                if decrementRespawnQuota(country) then
+                    return selectedSpawn  -- Infantry spawn point selected
+                else
+                    printMonitor("Respawn limit for " .. townName .. " reached!")
+                    sleep(2)
+                end
             end
         end
     end
@@ -959,30 +1071,53 @@ local function giveInfantryKit(player, class)
     end
 end
 
-local spawnRadius = 50
+local spawnRadius = 10
 local function respawnInfantry(player, spawnLocation, class)
-    if spawnLocation and spawnLocation.name == "USCommander" then
-        commands.exec("/tp "..player.." @a[tag=USCom,limit=1]")
+    if spawnLocation and spawnLocation.type and spawnLocation.type == "vehicle" then
+        --respawn on tank logic
+        local tankScan = radar.scanForShips(9999)
+        local tankId = tankslugtoID[spawnLocation.name].id
+        for _, ship in ipairs(tankScan) do
+            -- If the ship's ID matches the tankId, we found the tank
+            if ship.id == tankId then
+                local tankPosition = ship.pos
+                -- Teleport the player
+                commands.exec(("tp %s %d %d %d"):format(player, ship.pos.x, ship.pos.y, ship.pos.z))
+
+                -- Feedback
+                commands.exec((
+                    "title %s actionbar {\"text\":\"Respawned as %s at %s (Stage %d)\",\"color\":\"yellow\"}"
+                ):format(player, class, tankId, currentStage))
+                commands.exec("/effect give "..player.." minecraft:resistance 4 10")
+                print("Spawned at "..tankId)
+                print(ship.pos.x, ship.pos.y, ship.pos.z)
+            end
+        end
     else
-        -- pick a random offset in the horizontal plane
-        local dx = math.random(-spawnRadius, spawnRadius)
-        local dz = math.random(-spawnRadius, spawnRadius)
-        local x = math.floor(spawnLocation.x + dx + 0.5)
-        local z = math.floor(spawnLocation.z + dz + 0.5)
-        local y = spawnLocation.y  -- keep same height; adjust if you have ground-finding logic
+        if spawnLocation and spawnLocation.name == "USCommander" then
+            commands.exec("/tp "..player.." @a[tag=USCom,limit=1]")
+        elseif spawnLocation and spawnLocation.name == "JPCommander" then
+            commands.exec("/tp "..player.." @a[tag=JPCom,limit=1]")
+        else
+            -- pick a random offset in the horizontal plane
+            local dx = math.random(-spawnRadius, spawnRadius)
+            local dz = math.random(-spawnRadius, spawnRadius)
+            local x = math.floor(spawnLocation.x + dx + 0.5)
+            local z = math.floor(spawnLocation.z + dz + 0.5)
+            local y = spawnLocation.y  -- keep same height; adjust if you have ground-finding logic
 
-        -- Teleport the player
-        commands.exec(("tp %s %d %d %d"):format(player, x, y, z))
+            -- Teleport the player
+            commands.exec(("tp %s %d %d %d"):format(player, x, y, z))
 
-        -- Feedback
-        commands.exec((
-            "title %s actionbar {\"text\":\"Respawned as %s at %s (Stage %d)\",\"color\":\"yellow\"}"
-        ):format(player, class, spawnLocation.name, currentStage))
-        commands.exec("/effect give "..player.." minecraft:resistance 4 10")
-        print(("%s respawned near %s at (%d, %d, %d)"):format(player, spawnLocation.name, x, y, z))
+            -- Feedback
+            commands.exec((
+                "title %s actionbar {\"text\":\"Respawned as %s at %s (Stage %d)\",\"color\":\"yellow\"}"
+            ):format(player, class, spawnLocation.name, currentStage))
+            commands.exec("/effect give "..player.." minecraft:resistance 4 10")
+            print(("%s respawned near %s at (%d, %d, %d)"):format(player, spawnLocation.name, x, y, z))
+        end
     end
 end
-
 
 local townXRetreated,townYRetreated = false,false
 local function retreatTown()
@@ -1310,6 +1445,12 @@ parallel.waitForAny(
                     sleep(1)
                     goto post_action
                 end]]
+                print("Checking reinforcement")
+                --[[if not reinforcement_arrived and country == "USMC" then
+                    printMonitor("Reinforcement not arrived")
+                    sleep(1)
+                    goto post_action
+                end]]
 
                 monitor.clear()
                 monitor.setCursorPos(1,1)
@@ -1364,8 +1505,8 @@ parallel.waitForAny(
                 end
 
                 --=== Your existing TANK teleport flow ===--
-                local teleportCord = spawnPoint
-                local points = generateGridPoints(teleportCord.x, teleportCord.y, teleportCord.z)
+                teleportCord = spawnPoint
+                points = generateGridPoints(teleportCord.x, teleportCord.y, teleportCord.z)
                 local currentCount = getStock(country, selectedTank)
                 local teleported = false
                 local tankNumber = currentCount
@@ -1373,7 +1514,16 @@ parallel.waitForAny(
                 while tankNumber > 0 and not teleported do
                     local tankToTeleport = selectedTank .. "-" .. tankNumber
                     local point = points[currentPointIndex]
-                    local finalX, finalY, finalZ = point.x, teleportCord.y, point.z
+                    local finalX, finalY, finalZ
+                    if teleportCord.useGrid then
+                        finalX, finalY, finalZ = point.x, teleportCord.y, point.z
+                    else
+                        finalX, finalY, finalZ = teleportCord.x, teleportCord.y, teleportCord.z
+                    end
+
+                    --Detect current tank list
+                    oldTankScan = radar.scanForShips(9999)
+                    oldTankInSpawn = tankInSpawnFilter(oldTankScan, {x=finalX,y=finalY,z=finalZ}, 10)
 
                     -- Move old tank (if any) to reserve
                     local oldTank = playerTankMap[closetPlayerName]
@@ -1411,10 +1561,20 @@ parallel.waitForAny(
                         playerTankMap[closetPlayerName] = tankToTeleport
                         commands.exec(("give %s create_tweaked_controllers:tweaked_linked_controller{display:{Name:'{\"text\":\"%s\"}'}}"):format(closetPlayerName, tankToTeleport))
 
+
                         for _, item in ipairs(repairKits) do
                             commands.exec(("give %s %s %d"):format(closetPlayerName, item.id, item.count))
                         end
                         printMonitor("Given " .. selectedTank .. " repair kit!")
+
+                        sleep(0.5)
+                        newTankScan = radar.scanForShips(9999)
+                        newTankInSpawn = tankInSpawnFilter(newTankScan, {x=finalX,y=finalY,z=finalZ}, 5)
+                        newlySpawnedShip = filterNewlySpawnedShip(oldTankInSpawn,newTankInSpawn)
+
+                        if newlySpawnedShip and newlySpawnedShip.id then
+                            tankslugtoID[tankToTeleport] = { id=newlySpawnedShip.id, crewSpawnLeft=tanksList[country][selectedTank].extraCrewCount, mass = newlySpawnedShip.id}
+                        end
 
                         commands.exec(("tp %s %d %d %d"):format(closetPlayerName, finalX, finalY + 2, finalZ))
                         commands.exec(("tellraw %s {\"text\":\"Right click controller hub to link\",\"color\":\"yellow\"}"):format(closetPlayerName))
@@ -1451,15 +1611,17 @@ parallel.waitForAny(
                 handleInfantryKit(closetPlayerName, class)
                 -- Teleport & kit (with respawn quota logic)
                 respawnInfantry(closetPlayerName, spawn, class)
+                startCountDown = true
             end
 
             ::post_action::
             displayScoreboard()
+            print(textutils.serialize(tankslugtoID))
             sleep(0.5)
         end
     end,
     getClosestUserName,
     manageCreativeArea,
     listenStage,
-    retreatTown
+    countDownReinforcement
 )
