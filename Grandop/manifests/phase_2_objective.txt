@@ -2,6 +2,7 @@
 Grandop/run.lua|run
 Grandop/programs/objective_controller.lua|programs/objective_controller.lua
 Grandop/lib/minecraft.lua|lib/minecraft.lua
+Grandop/lib/bootstrap.lua|lib/bootstrap.lua
 Grandop/lib/stage_channel.lua|lib/stage_channel.lua
 Grandop/lib/tickets.lua|lib/tickets.lua
 Grandop/lib/objective/staged_capture.lua|lib/objective/staged_capture.lua

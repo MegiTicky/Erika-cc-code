@@ -7,7 +7,7 @@
 --
 -- Usage: loadout_service [loadout_file]
 
-package.path = "/?.lua;/?/init.lua;" .. package.path
+dofile("/lib/bootstrap.lua")
 
 local loadout = require("lib.loadout")
 

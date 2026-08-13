@@ -2,6 +2,7 @@
 Grandop/run.lua|run
 Grandop/programs/respawn_terminal.lua|programs/respawn_terminal.lua
 Grandop/lib/json.lua|lib/json.lua
+Grandop/lib/bootstrap.lua|lib/bootstrap.lua
 Grandop/lib/loadout.lua|lib/loadout.lua
 Grandop/lib/minecraft.lua|lib/minecraft.lua
 Grandop/lib/monitor_ui.lua|lib/monitor_ui.lua

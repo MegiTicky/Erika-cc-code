@@ -9,7 +9,7 @@
 local args = { ... }
 local missionId = args[1]
 
-package.path = "/?.lua;/?/init.lua;" .. package.path
+dofile("/lib/bootstrap.lua")
 
 local mission = missionId and require("missions." .. missionId)
 

@@ -16,7 +16,7 @@ local args = { ... }
 local missionId = args[1]
 if not missionId then error("Usage: respawn_terminal <mission> [country]") end
 
-package.path = "/?.lua;/?/init.lua;" .. package.path
+dofile("/lib/bootstrap.lua")
 
 local mission = require("missions." .. missionId)
 local respawnCfg = mission.respawn

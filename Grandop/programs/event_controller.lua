@@ -8,7 +8,7 @@ local args = { ... }
 local missionId = args[1]
 if not missionId then error("Usage: event_controller <mission>") end
 
-package.path = "/?.lua;/?/init.lua;" .. package.path
+dofile("/lib/bootstrap.lua")
 
 local mission = require("missions." .. missionId)
 local objective = mission.objective

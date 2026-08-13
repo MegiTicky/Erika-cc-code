@@ -2,4 +2,5 @@
 Grandop/run.lua|run
 Grandop/programs/ticket_server.lua|programs/ticket_server.lua
 Grandop/lib/tickets.lua|lib/tickets.lua
+Grandop/lib/bootstrap.lua|lib/bootstrap.lua
 Grandop/missions/lieyu_phase_2.lua|missions/lieyu_phase_2.lua
