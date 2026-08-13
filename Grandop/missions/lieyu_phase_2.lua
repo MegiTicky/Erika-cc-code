@@ -15,7 +15,8 @@ local retreat = {
 
 local stageState = { current = 1 }
 
-local respawn = {
+local respawn
+respawn = {
     loadout_file = "data/loadouts/lieyu_phase_2.json",
     tankListFile = "tanksList.txt",
     -- Keep ROM startup unattended. Change these to true for an explicit reset.

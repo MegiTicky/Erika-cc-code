@@ -22,7 +22,8 @@ local function adjustKitCooldowns(loadoutData, delta)
     end
 end
 
-local respawn = {
+local respawn
+respawn = {
     loadout_file = "data/loadouts/lieyu_phase_2_5.json",
     tankListFile = "tanksList.txt",
     reserve = { x = 1572, y = 90, z = 6280 },
