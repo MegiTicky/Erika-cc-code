@@ -15,6 +15,16 @@ local retreat = {
 
 local stageState = { current = 1 }
 
+local function scoreboardValue(player, objective)
+    local ok, output = commands.exec("/scoreboard players get " .. player .. " " .. objective)
+    if not ok then return 0 end
+    for _, line in ipairs(output or {}) do
+        local value = tostring(line):match("has%s+(-?%d+)")
+        if value then return tonumber(value) end
+    end
+    return 0
+end
+
 local respawn
 respawn = {
     loadout_file = "data/loadouts/lieyu_phase_2.json",
@@ -120,10 +130,10 @@ respawn = {
         commands.exec("/team add TownY_JPSpawn")
         commands.exec("/team add TownZ_JPSpawn")
 
-        local _, _, us = commands.exec("/scoreboard players get USMC spawnCount")
-        local _, _, x = commands.exec("/scoreboard players get TownX_JP spawnCount")
-        local _, _, y = commands.exec("/scoreboard players get TownY_JP spawnCount")
-        local _, _, z = commands.exec("/scoreboard players get TownZ_JP spawnCount")
+        local us = scoreboardValue("USMC", "spawnCount")
+        local x = scoreboardValue("TownX_JP", "spawnCount")
+        local y = scoreboardValue("TownY_JP", "spawnCount")
+        local z = scoreboardValue("TownZ_JP", "spawnCount")
         commands.exec("/scoreboard players set USMCSpawn Troops_Strength " .. (100 - (tonumber(us) or 0)))
         commands.exec("/scoreboard players set TownX_JPSpawn Troops_Strength " .. (townQuotas["Town X"] - (tonumber(x) or 0)))
         commands.exec("/scoreboard players set TownY_JPSpawn Troops_Strength " .. (townQuotas["Town Y"] - (tonumber(y) or 0)))
@@ -132,20 +142,17 @@ respawn = {
 
     hasQuota = function(country, townName)
         if country == "USMC" then
-            local _, _, count = commands.exec("/scoreboard players get USMC spawnCount")
-            return (100 - (tonumber(count) or 0)) > 0
+            return (100 - scoreboardValue("USMC", "spawnCount")) > 0
         end
         local quota = townQuotas[townName]
         if not quota then return false end
         local player = ("Town%s_JP"):format(townName:sub(6))  -- "Town X" -> "TownX_JP"
-        local _, _, count = commands.exec("/scoreboard players get " .. player .. " spawnCount")
-        return (quota - (tonumber(count) or 0)) > 0
+        return (quota - scoreboardValue(player, "spawnCount")) > 0
     end,
 
     decrementQuota = function(country, townName)
         if country == "USMC" then
-            local _, _, count = commands.exec("/scoreboard players get USMC spawnCount")
-            count = tonumber(count) or 0
+            local count = scoreboardValue("USMC", "spawnCount")
             if count < 100 then
                 commands.exec("/scoreboard players add USMC spawnCount 1")
                 return true
@@ -155,8 +162,7 @@ respawn = {
         local quota = townQuotas[townName]
         if not quota then return false end
         local player = ("Town%s_JP"):format(townName:sub(6))
-        local _, _, count = commands.exec("/scoreboard players get " .. player .. " spawnCount")
-        count = tonumber(count) or 0
+        local count = scoreboardValue(player, "spawnCount")
         if count < quota then
             commands.exec("/scoreboard players add " .. player .. " spawnCount 1")
             return true
@@ -165,10 +171,10 @@ respawn = {
     end,
 
     displayScoreboard = function()
-        local _, _, us = commands.exec("/scoreboard players get USMC spawnCount")
-        local _, _, x = commands.exec("/scoreboard players get TownX_JP spawnCount")
-        local _, _, y = commands.exec("/scoreboard players get TownY_JP spawnCount")
-        local _, _, z = commands.exec("/scoreboard players get TownZ_JP spawnCount")
+        local us = scoreboardValue("USMC", "spawnCount")
+        local x = scoreboardValue("TownX_JP", "spawnCount")
+        local y = scoreboardValue("TownY_JP", "spawnCount")
+        local z = scoreboardValue("TownZ_JP", "spawnCount")
         commands.exec("/scoreboard players set USMCSpawn Troops_Strength " .. (100 - (tonumber(us) or 0)))
         commands.exec("/scoreboard players set TownX_JPSpawn Troops_Strength " .. (townQuotas["Town X"] - (tonumber(x) or 0)))
         commands.exec("/scoreboard players set TownY_JPSpawn Troops_Strength " .. (townQuotas["Town Y"] - (tonumber(y) or 0)))
@@ -198,16 +204,16 @@ respawn = {
         while true do
             if ctx.stage.current == 2 and not retreat.townXRetreated then
                 print("Retreat from X")
-                local _, _, xCount = commands.exec("/scoreboard players get TownX_JP spawnCount")
-                local remainingX = townQuotas["Town X"] - (tonumber(xCount) or 0)
+                local xCount = scoreboardValue("TownX_JP", "spawnCount")
+                local remainingX = townQuotas["Town X"] - xCount
                 commands.exec("/scoreboard players set TownX_JP spawnCount " .. townQuotas["Town X"])
                 commands.exec("/scoreboard players remove TownY_JP spawnCount " .. math.floor(remainingX * 0.7))
                 commands.exec("/say JP soldier in town X retreated to town Y")
                 retreat.townXRetreated = true
             elseif ctx.stage.current == 3 and not retreat.townYRetreated then
                 print("Retreat from Y")
-                local _, _, yCount = commands.exec("/scoreboard players get TownY_JP spawnCount")
-                local remainingY = townQuotas["Town Y"] - (tonumber(yCount) or 0)
+                local yCount = scoreboardValue("TownY_JP", "spawnCount")
+                local remainingY = townQuotas["Town Y"] - yCount
                 commands.exec("/scoreboard players set TownY_JP spawnCount " .. townQuotas["Town Y"])
                 commands.exec("/scoreboard players remove TownZ_JP spawnCount " .. math.floor(remainingY * 0.7))
                 commands.exec("/say JP soldier in town Y retreated to town Z")

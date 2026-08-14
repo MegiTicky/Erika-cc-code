@@ -145,8 +145,12 @@ local function randomTeleport(target, spawn, radius)
     elseif spawn.name == "JPCommander" then
         commands.exec("/tp " .. target .. " @a[tag=JPCom,limit=1]")
     else
-        commands.exec("/spreadplayers " .. spawn.x .. " " .. spawn.z .. " 0 " .. (radius or 10) .. " false " .. target)
-        commands.exec("/tp " .. target .. " ~ " .. spawn.y .. " ~")
+        radius = radius or 10
+        local dx = math.random(-radius, radius)
+        local dz = math.random(-radius, radius)
+        local x = math.floor(spawn.x + dx + 0.5)
+        local z = math.floor(spawn.z + dz + 0.5)
+        commands.exec(("/tp %s %d %d %d"):format(target, x, spawn.y, z))
     end
 end
 
@@ -219,14 +223,14 @@ function book.run(ctx)
             log("Mode selected: " .. faction .. " infantry")
             classBook(area, data, faction, team, selector)
             commands.exec("/tag " .. selector .. " add grandop_wait_class")
-            commands.exec("/tag " .. selector .. " remove " .. selection)
             commands.exec("/tag " .. selector .. " remove grandop_wait_mode")
+            commands.exec("/tag " .. selector .. " remove " .. selection)
         elseif features.tanks then
             log("Mode selected: " .. faction .. " tank")
             tankBook(area, faction, team, respawn.tanks, selector)
             commands.exec("/tag " .. selector .. " add grandop_wait_tank")
-            commands.exec("/tag " .. selector .. " remove " .. selection)
             commands.exec("/tag " .. selector .. " remove grandop_wait_mode")
+            commands.exec("/tag " .. selector .. " remove " .. selection)
         end
     end
 
@@ -242,9 +246,9 @@ function book.run(ctx)
         log("Class selected: " .. className)
         spawnBook(area, respawn, faction, team, ctx.stage, selector)
         commands.exec("/tag " .. selector .. " add grandop_class_" .. classIndex)
-        commands.exec("/tag " .. selector .. " remove grandop_select_class_" .. classIndex)
         commands.exec("/tag " .. selector .. " add grandop_wait_spawn")
         commands.exec("/tag " .. selector .. " remove grandop_wait_class")
+        commands.exec("/tag " .. selector .. " remove grandop_select_class_" .. classIndex)
     end
 
     local function processSpawn(team, classIndex, spawnIndex)
@@ -259,16 +263,18 @@ function book.run(ctx)
         local selector = selectionSelector(team, "grandop_wait_spawn", "grandop_select_spawn_" .. spawnIndex, "grandop_class_" .. classIndex)
         if not commands.exec("execute if entity " .. selector) then return end
         log("Infantry spawn selected: " .. faction .. " " .. spawn.name)
-        commands.exec("/tag " .. selector .. " remove grandop_select_spawn_" .. spawnIndex)
         if respawn.canDeploy and not respawn.canDeploy(faction, "infantry", spawn.name) then
+            commands.exec("/tag " .. selector .. " remove grandop_select_spawn_" .. spawnIndex)
             commands.exec("/tellraw " .. selector .. " {\"text\":\"Respawn quota exhausted\",\"color\":\"red\"}")
             return
         end
         commands.exec("/tag " .. selector .. " add grandop_processing")
+        commands.exec("/tag " .. selector .. " remove grandop_select_spawn_" .. spawnIndex)
         local target = processingSelector(team)
         loadout.applyClass(data, className, target)
         randomTeleport(target, spawn, respawn.spawnRadius)
         if respawn.consumeDeployment then respawn.consumeDeployment(faction, "infantry", spawn.name) end
+        if respawn.displayScoreboard then respawn.displayScoreboard() end
         commands.exec("/effect give " .. target .. " minecraft:resistance 4 10")
         commands.exec("/tag " .. target .. " remove grandop_class_" .. classIndex)
         commands.exec("/tag " .. target .. " remove grandop_processing")
@@ -300,9 +306,9 @@ function book.run(ctx)
         if not tankName or not commands.exec("execute if entity " .. selector) then return end
         log("Tank selected: " .. faction .. " " .. tankName)
         commands.exec("/tag " .. selector .. " add grandop_tank_" .. tankIndex)
-        commands.exec("/tag " .. selector .. " remove grandop_select_tank_" .. tankIndex)
         commands.exec("/tag " .. selector .. " add grandop_wait_tank_spawn")
         commands.exec("/tag " .. selector .. " remove grandop_wait_tank")
+        commands.exec("/tag " .. selector .. " remove grandop_select_tank_" .. tankIndex)
         tankSpawnBook(area, respawn, faction, team, selector)
     end
 
@@ -315,16 +321,18 @@ function book.run(ctx)
         local selector = selectionSelector(team, "grandop_wait_tank_spawn", "grandop_select_tank_spawn_" .. spawnIndex, "grandop_tank_" .. tankIndex)
         if not tankName or not spawn or not commands.exec("execute if entity " .. selector) then return end
         log("Tank spawn selected: " .. faction .. " " .. tankName .. " -> " .. spawn.name)
-        commands.exec("/tag " .. selector .. " remove grandop_select_tank_spawn_" .. spawnIndex)
         if vehicles.timeToNext(v, faction, tankName) > 0 then
+            commands.exec("/tag " .. selector .. " remove grandop_select_tank_spawn_" .. spawnIndex)
             commands.exec("/tellraw " .. selector .. " {\"text\":\"Tank cooldown active\",\"color\":\"red\"}")
             return
         end
         if respawn.canDeploy and not respawn.canDeploy(faction, "tank") then
+            commands.exec("/tag " .. selector .. " remove grandop_select_tank_spawn_" .. spawnIndex)
             commands.exec("/tellraw " .. selector .. " {\"text\":\"Respawn quota exhausted\",\"color\":\"red\"}")
             return
         end
         commands.exec("/tag " .. selector .. " add grandop_processing")
+        commands.exec("/tag " .. selector .. " remove grandop_select_tank_spawn_" .. spawnIndex)
         local target = processingSelector(team)
         local deployed = vehicles.spawnTank({
             v = v,
@@ -343,6 +351,7 @@ function book.run(ctx)
         if deployed then
             vehicles.tryConsume(v, faction, tankName)
             if respawn.consumeDeployment then respawn.consumeDeployment(faction, "tank") end
+            if respawn.displayScoreboard then respawn.displayScoreboard() end
             commands.exec("/tag " .. target .. " remove grandop_tank_" .. tankIndex)
             commands.exec("/tag " .. target .. " remove grandop_wait_tank_spawn")
         else
