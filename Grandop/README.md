@@ -142,6 +142,18 @@ The reset initializes these counters:
 
 ## Starting And Stopping
 
+The launcher has an interactive menu. Run this with no arguments when you do
+not want to remember service names or mission IDs:
+
+```text
+run
+```
+
+The menu only shows services whose program files are installed. It discovers
+mission files from `/missions` and loadout JSON files from `/data/loadouts`.
+For the complete Phase 2 profile, choose `Start unified event`, then select
+`lieyu_phase_2`.
+
 Start the event from the event computer terminal:
 
 ```text
