@@ -276,6 +276,7 @@ function book.run(ctx)
         loadout.applyClass(data, className, target)
         randomTeleport(target, spawn, respawn.spawnRadius)
         if respawn.consumeDeployment then respawn.consumeDeployment(faction, "infantry", spawn.name) end
+        if ctx.checkpoint then ctx.checkpoint("infantry deployment") end
         if respawn.displayScoreboard then respawn.displayScoreboard() end
         commands.exec("/effect give " .. target .. " minecraft:resistance 4 10")
         commands.exec("/tag " .. target .. " remove grandop_class_" .. classIndex)
@@ -349,10 +350,12 @@ function book.run(ctx)
             tankslugtoID = state.tankslugtoID,
             repairKits = data.repair_kits or {},
             tankListFile = respawn.tankListFile or "tanksList.txt",
+            checkpoint = ctx.checkpoint,
         })
         if deployed then
             vehicles.tryConsume(v, faction, tankName)
             if respawn.consumeDeployment then respawn.consumeDeployment(faction, "tank") end
+            if ctx.checkpoint then ctx.checkpoint("tank deployment") end
             if respawn.displayScoreboard then respawn.displayScoreboard() end
             commands.exec("/tag " .. target .. " remove grandop_tank_" .. tankIndex)
             commands.exec("/tag " .. target .. " remove grandop_wait_tank_spawn")

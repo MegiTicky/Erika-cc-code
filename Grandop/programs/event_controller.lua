@@ -151,6 +151,7 @@ if features.tanks and not radar then
 end
 
 local loadout = grandopRequire("lib.loadout")
+local missionState = grandopRequire("lib.mission_state")
 local stage = grandopRequire("lib.stage_channel")
 local creative = grandopRequire("lib.services.creative_area")
 local book = grandopRequire("lib.respawn.book")
@@ -158,25 +159,56 @@ local book = grandopRequire("lib.respawn.book")
 local data = loadout.load(respawn.loadout_file)
 if not data then error("Missing loadout file: " .. respawn.loadout_file) end
 
+local resetRequested = respawn.resetTanks or respawn.resetSpawns
+if resetRequested then missionState.reset(missionId) end
+local savedState, stateReason = missionState.load(missionId)
+if stateReason ~= "missing" and not savedState then
+    error("Mission state recovery refused: " .. tostring(stateReason) .. ". Reset it deliberately before starting a new match.")
+end
+if savedState then
+    if objective.type == "staged_capture" and savedState.stage > #(objective.captureZones or {}) then
+        error("Mission state recovery refused: saved stage is outside this mission's objective range")
+    end
+    for name, value in pairs(savedState.tickets or {}) do
+        if type(name) ~= "string" or type(value) ~= "number" or value < 0 then
+            error("Mission state recovery refused: invalid saved ticket value")
+        end
+    end
+    for name, value in pairs(savedState.quotas or {}) do
+        if type(name) ~= "string" or type(value) ~= "number" or value < 0 then
+            error("Mission state recovery refused: invalid saved reinforcement value")
+        end
+    end
+end
+local restoring = savedState ~= nil
+
 if features.tanks then
     local vehicles = grandopRequire("lib.respawn.vehicles")
     local tankListFile = respawn.tankListFile or "tanksList.txt"
     if respawn.resetTanks then
+        restoring = false
+        savedState = nil
         vehicles.saveTankList(tankListFile, respawn.vehiclePools.initial)
     end
-    respawn.tanks = vehicles.loadTankList(tankListFile, respawn.vehiclePools.initial)
+    respawn.tanks = (savedState and savedState.vehicles) or vehicles.loadTankList(tankListFile, respawn.vehiclePools.initial)
     respawn.resetTanks = false
 end
 
-if respawn.initScoreboard then respawn.initScoreboard(respawn.resetSpawns or false) end
+if respawn.resetSpawns then
+    restoring = false
+    savedState = nil
+end
+if respawn.initScoreboard then respawn.initScoreboard((respawn.resetSpawns or false) or not restoring) end
 
 local stageHub = objective.stageState or { current = objective.startZone or 1 }
+if savedState then stageHub.current = savedState.stage end
 objective.stagingAreas = respawn.stagingAreas
 objective.teamFactions = teams
 objective.attackerDepleted = respawn.attackerDepleted
 local state = {
     playerTankMap = {},
     tankslugtoID = {},
+    flags = savedState and savedState.flags or {},
 }
 local operator = { paused = false, shutdown = false }
 
@@ -195,6 +227,68 @@ local ctx = {
     log = print,
 }
 
+local function scoreboardValue(player, objectiveName)
+    local ok, _, value = commands.exec("/scoreboard players get " .. player .. " " .. objectiveName)
+    return ok and tonumber(value) or 0
+end
+
+local function restoreScoreboards(snapshot)
+    local ticketObjective = objective.localTickets and "tickets" or (objective.type == "control_point" and "Tickets")
+    for pool, value in pairs(snapshot.quotas or {}) do
+        commands.exec("/scoreboard players set " .. pool .. " Troops_Strength " .. math.floor(value))
+    end
+    for team, value in pairs(snapshot.tickets or {}) do
+        if ticketObjective then
+            commands.exec("/scoreboard players set " .. team .. " " .. ticketObjective .. " " .. math.floor(value))
+        end
+    end
+end
+
+if savedState then
+    objective.runtimeState = savedState.objective or {}
+    objective.runtimeState.zone = objective.runtimeState.zone or savedState.stage
+    objective.restoreTickets = next(savedState.tickets or {}) ~= nil
+    operator.paused = savedState.operator and savedState.operator.paused or false
+    restoreScoreboards(savedState)
+elseif objective.localTickets then
+    local tickets = grandopRequire("lib.tickets")
+    local starts = objective.ticketStart or {}
+    tickets.initialize(objective.attackTeam, objective.defenseTeam, starts.attack, starts.defense)
+end
+
+function ctx.checkpoint(reason)
+    local quotas = {}
+    for pool in pairs((mission.operator and mission.operator.quota_pools) or {}) do
+        quotas[pool] = scoreboardValue(pool, "Troops_Strength")
+    end
+    local ticketValues = {}
+    if objective.localTickets then
+        ticketValues[objective.attackTeam] = scoreboardValue(objective.attackTeam, "tickets")
+        ticketValues[objective.defenseTeam] = scoreboardValue(objective.defenseTeam, "tickets")
+    elseif objective.type == "control_point" then
+        ticketValues[objective.redTeam] = scoreboardValue(objective.redTeam, "Tickets")
+        ticketValues[objective.blueTeam] = scoreboardValue(objective.blueTeam, "Tickets")
+    end
+    local snapshot = {
+        schema_version = missionState.VERSION,
+        mission_id = missionId,
+        saved_at = os.epoch("utc"),
+        match_status = "running",
+        stage = stageHub.current,
+        objective = objective.runtimeState or { zone = stageHub.current },
+        tickets = ticketValues,
+        quotas = quotas,
+        vehicles = features.tanks and respawn.tanks or nil,
+        flags = state.flags or {},
+        operator = { paused = operator.paused },
+    }
+    local ok, reasonText = missionState.save(missionId, snapshot)
+    if not ok then printError("Mission state save failed (" .. tostring(reason) .. "): " .. tostring(reasonText)) end
+    return ok
+end
+
+if not restoring then ctx.checkpoint("initialization") end
+
 local objectiveEngine
 if objective.type == "staged_capture" then
     objectiveEngine = grandopRequire("lib.objective.staged_capture")
@@ -208,11 +302,19 @@ end
 
 local function objectiveLoop()
     objective.operator = operator
+    objective.checkpoint = ctx.checkpoint
     objectiveEngine.run(objective)
 end
 
 local function bookLoop()
     book.run(ctx)
+end
+
+local function checkpointLoop()
+    while not operator.shutdown do
+        sleep(15)
+        ctx.checkpoint("periodic")
+    end
 end
 
 local function stageListenerLoop()
@@ -231,7 +333,7 @@ local function creativeLoop()
     end
 end
 
-local tasks = { objectiveLoop, bookLoop, stageListenerLoop, creativeLoop }
+local tasks = { objectiveLoop, bookLoop, stageListenerLoop, creativeLoop, checkpointLoop }
 local operatorService = grandopRequire("lib.operator_service")
 table.insert(tasks, function() operatorService.run(ctx, { rednet_side = "right" }) end)
 if respawn.reinforcement and respawn.reinforcement.loop then
@@ -252,6 +354,18 @@ if not ok then
     printError("Event task failed: " .. reason)
 else
     print("Event ended")
+end
+
+if operator.resetRequested then
+    missionState.reset(missionId)
+    if features.tanks then
+        local tankListFile = respawn.tankListFile or "tanksList.txt"
+        if fs.exists(tankListFile) then fs.delete(tankListFile) end
+    end
+    if respawn.initScoreboard then respawn.initScoreboard(true) end
+    print("Mission state cleared for a new match")
+else
+    ctx.checkpoint("controller exit")
 end
 
 if logFile then logFile.close() end

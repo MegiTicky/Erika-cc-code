@@ -42,10 +42,12 @@ function service.run(ctx, config)
                 reply(sender, requestId, true, "Status", status(ctx))
             elseif action == "pause" then
                 ctx.operator.paused = true
+                if ctx.checkpoint then ctx.checkpoint("operator pause") end
                 audit(ctx, sender, action, "event paused")
                 reply(sender, requestId, true, "Event paused")
             elseif action == "resume" then
                 ctx.operator.paused = false
+                if ctx.checkpoint then ctx.checkpoint("operator resume") end
                 audit(ctx, sender, action, "event resumed")
                 reply(sender, requestId, true, "Event resumed")
             elseif action == "stage_set" then
@@ -55,6 +57,7 @@ function service.run(ctx, config)
                     reply(sender, requestId, false, "Invalid stage number")
                 else
                     ctx.operator.stageRequest = value
+                    if ctx.checkpoint then ctx.checkpoint("operator stage request") end
                     audit(ctx, sender, action, "stage " .. value .. " requested")
                     reply(sender, requestId, true, "Stage " .. value .. " requested")
                 end
@@ -64,13 +67,20 @@ function service.run(ctx, config)
                     reply(sender, requestId, false, "Invalid quota pool or value")
                 else
                     commands.exec("/scoreboard players set " .. pool .. " Troops_Strength " .. math.floor(value))
+                    if ctx.checkpoint then ctx.checkpoint("operator quota change") end
                     audit(ctx, sender, action, pool .. "=" .. math.floor(value))
                     reply(sender, requestId, true, pool .. " set", { value = score(pool, "Troops_Strength") })
                 end
             elseif action == "shutdown" then
                 ctx.operator.shutdown = true
+                if ctx.checkpoint then ctx.checkpoint("operator shutdown") end
                 audit(ctx, sender, action, "graceful shutdown requested")
                 reply(sender, requestId, true, "Event shutting down")
+            elseif action == "reset_match" then
+                ctx.operator.resetRequested = true
+                ctx.operator.shutdown = true
+                audit(ctx, sender, action, "new match reset requested")
+                reply(sender, requestId, true, "Event stopped; restart once with resetSpawns and resetTanks enabled")
             else
                 reply(sender, requestId, false, "Unsupported action")
             end

@@ -50,12 +50,26 @@ function engine.run(mcfg)
     local hub = (mcfg.stage_channel and not mcfg.stageState) and stage.new(mcfg.stage_channel) or nil
     if hub then stage.open(hub) end
 
+    local restored = mcfg.runtimeState or {}
     local state = {
-        zone = mcfg.startZone or 1,
-        score = 0,
-        ended = false,
+        zone = restored.zone or mcfg.startZone or 1,
+        score = restored.score or 0,
+        ended = restored.ended or false,
+        winner = restored.winner,
         mission = mcfg,
     }
+    if state.zone < 1 or state.zone > #mcfg.captureZones then
+        error("Saved objective zone is outside this mission's capture zones")
+    end
+    local function saveRuntimeState()
+        mcfg.runtimeState = {
+            zone = state.zone,
+            score = state.score,
+            ended = state.ended,
+            winner = state.winner,
+        }
+    end
+    saveRuntimeState()
     local hooks = mcfg.hooks or {}
 
     local function currentZone()
@@ -123,6 +137,9 @@ function engine.run(mcfg)
 
     local function gameEnd(winner, reason)
         state.ended = true
+        state.winner = winner
+        saveRuntimeState()
+        if mcfg.checkpoint then mcfg.checkpoint("objective ended") end
         if hooks.onGameEnd then hooks.onGameEnd(state) end
         mc.title('{"text":"' .. tostring(winner) .. ' wins!","color":"' .. teamColor(winner) .. '"}')
         print("Game ended: " .. tostring(reason))
@@ -176,6 +193,8 @@ function engine.run(mcfg)
 
         setBeacon(currentZone())
         if hooks.onStageChange then hooks.onStageChange(state, state.zone) end
+        saveRuntimeState()
+        if mcfg.checkpoint then mcfg.checkpoint("stage advanced") end
     end
 
     local function selectStage(stageNumber)
@@ -187,6 +206,8 @@ function engine.run(mcfg)
         setBeacon(currentZone())
         refreshSpawns()
         updateBossbar()
+        saveRuntimeState()
+        if mcfg.checkpoint then mcfg.checkpoint("operator stage change") end
         print("Operator selected stage " .. state.zone)
     end
 
@@ -279,6 +300,7 @@ function engine.run(mcfg)
 
         if state.ended then break end
 
+        saveRuntimeState()
         setBeacon(currentZone())
         updateBossbar()
         if os.clock() >= lastBossbarPlayerRefresh then
@@ -290,6 +312,7 @@ function engine.run(mcfg)
         sleep(interval)
         end
     end
+    if mcfg.checkpoint then mcfg.checkpoint("objective stopped") end
 end
 
 return engine

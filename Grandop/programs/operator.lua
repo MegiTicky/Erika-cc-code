@@ -40,7 +40,8 @@ while true do
     print("4. Set stage")
     print("5. Set respawn count")
     print("6. Graceful event shutdown")
-    print("7. Exit")
+    print("7. Stop for new-match reset")
+    print("8. Exit")
     write("Select: ")
     local choice = read()
     if choice == "1" then showStatus()
@@ -53,6 +54,7 @@ while true do
         write("Respawn pool: "); local pool = read(); write("Remaining count: "); local value = tonumber(read())
         if value and confirm("Set " .. pool .. " to " .. value .. "?") then local _, m = request("quota_set", { pool = pool, value = value }); print(m) end
     elseif choice == "6" and confirm("Shut down event?") then local _, m = request("shutdown"); print(m)
-    elseif choice == "7" then break end
+    elseif choice == "7" and confirm("Stop event before resetting the match?") then local _, m = request("reset_match"); print(m)
+    elseif choice == "8" then break end
     print("Press any key..."); os.pullEvent("key")
 end

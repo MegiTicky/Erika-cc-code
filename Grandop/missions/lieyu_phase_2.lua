@@ -196,23 +196,26 @@ respawn = {
 
     -- JP units retreat from a town to the next when the stage advances.
     retreatLoop = function(ctx)
+        local flags = ctx.state.flags
         while true do
-            if ctx.stage.current == 2 and not retreat.townXRetreated then
+            if ctx.stage.current == 2 and not flags.townXRetreated then
                 print("Retreat from X")
                 local remainingX = scoreboardValue("TownX_JPSpawn", "Troops_Strength")
                 local remainingY = scoreboardValue("TownY_JPSpawn", "Troops_Strength")
                 setStrength("TownX_JPSpawn", 0)
                 setStrength("TownY_JPSpawn", remainingY + math.floor(remainingX * 0.7))
                 commands.exec("/say JP soldier in town X retreated to town Y")
-                retreat.townXRetreated = true
-            elseif ctx.stage.current == 3 and not retreat.townYRetreated then
+                flags.townXRetreated = true
+                if ctx.checkpoint then ctx.checkpoint("town X retreat") end
+            elseif ctx.stage.current == 3 and not flags.townYRetreated then
                 print("Retreat from Y")
                 local remainingY = scoreboardValue("TownY_JPSpawn", "Troops_Strength")
                 local remainingZ = scoreboardValue("TownZ_JPSpawn", "Troops_Strength")
                 setStrength("TownY_JPSpawn", 0)
                 setStrength("TownZ_JPSpawn", remainingZ + math.floor(remainingY * 0.7))
                 commands.exec("/say JP soldier in town Y retreated to town Z")
-                retreat.townYRetreated = true
+                flags.townYRetreated = true
+                if ctx.checkpoint then ctx.checkpoint("town Y retreat") end
             end
             sleep(0.5)
         end

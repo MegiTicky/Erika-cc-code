@@ -107,6 +107,24 @@ Mission configuration valid: lieyu_phase_2
 
 ## Fresh Match Initialization
 
+### Mission Snapshot Recovery
+
+The unified event controller writes `/data/mission_state_<mission>.json` for
+each running match. The snapshot contains objective progress, stage, tickets,
+reinforcement quotas, vehicle stock, retreat flags, and paused state. It is
+checkpointed after deployments, operator changes, stage changes, and every 15
+seconds. Restarting the controller restores this state automatically.
+
+Writes use a temporary file and retain the previous snapshot as `.bak`. If the
+snapshot is corrupt or does not match its mission ID/schema, startup fails
+closed instead of silently overwriting live match progress. Investigate it, or
+perform an intentional reset, before starting the controller again.
+
+Use `Stop for new-match reset` on the operator terminal before a fresh match.
+It clears the snapshot, legacy vehicle stock, and configured scoreboards after
+the controller stops. The reset flags below remain available for unattended
+ROM-started deployments.
+
 The mission deliberately preserves persistent state by default:
 
 - `spawnCount` preserves troop consumption between controller restarts.

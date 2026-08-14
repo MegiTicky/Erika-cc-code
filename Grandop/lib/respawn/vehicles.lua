@@ -390,7 +390,7 @@ function vehicles.spawnTank(ctx)
             commands.exec("vs set-static " .. tankToTeleport .. " false")
 
             vehicles.setStock(v, country, ctx.tankName, tankNumber - 1)
-            vehicles.saveTankList(ctx.tankListFile, v.tanks)
+            if ctx.checkpoint then ctx.checkpoint("vehicle stock changed") end
         end
     end
 

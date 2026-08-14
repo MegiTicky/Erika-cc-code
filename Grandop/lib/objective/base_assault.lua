@@ -20,6 +20,19 @@ function engine.run(mcfg)
     local maxCaptureMultiplier = mcfg.maxCaptureMultiplier or 2.5
 
     local bases = mcfg.bases -- { blue = {name, x, y, z, owner, prog, barId}, red = {...} }
+    local restored = mcfg.runtimeState or {}
+    for key, saved in pairs(restored.bases or {}) do
+        if bases[key] and type(saved) == "table" then
+            bases[key].owner = saved.owner or bases[key].owner
+            bases[key].prog = tonumber(saved.prog) or bases[key].prog
+        end
+    end
+    mcfg.runtimeState = { bases = {} }
+    local function saveBases()
+        for key, base in pairs(bases) do
+            mcfg.runtimeState.bases[key] = { owner = base.owner, prog = base.prog }
+        end
+    end
 
     local function setupBossbars()
         for key, b in pairs(bases) do
@@ -58,6 +71,7 @@ function engine.run(mcfg)
     end
 
     setupBossbars()
+    saveBases()
 
     local function stepBase(key)
         local b = bases[key]
@@ -94,6 +108,7 @@ function engine.run(mcfg)
         end
 
         updateBossbar(b)
+        saveBases()
         return false
     end
 
@@ -108,6 +123,7 @@ function engine.run(mcfg)
         sleep(updateInterval)
         end
     end
+    if mcfg.checkpoint then mcfg.checkpoint("objective stopped") end
 end
 
 return engine

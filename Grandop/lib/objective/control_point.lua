@@ -23,11 +23,19 @@ function engine.run(mcfg)
     local bossbarId = mcfg.bossbarId or "capturebar"
     local startTickets = mcfg.startTickets or 750
 
-    local blueProgress, redProgress = 0, 0
-    local currentOwner = nil
+    local restored = mcfg.runtimeState or {}
+    local blueProgress, redProgress = restored.blueProgress or 0, restored.redProgress or 0
+    local currentOwner = restored.currentOwner
+    mcfg.runtimeState = {
+        blueProgress = blueProgress,
+        redProgress = redProgress,
+        currentOwner = currentOwner,
+    }
 
-    mc.scoreboardSet("Red", "Tickets", startTickets)
-    mc.scoreboardSet("Blue", "Tickets", startTickets)
+    if not mcfg.restoreTickets then
+        mc.scoreboardSet("Red", "Tickets", startTickets)
+        mc.scoreboardSet("Blue", "Tickets", startTickets)
+    end
 
     commands.exec("/bossbar add " .. bossbarId .. " \"Capture Progress\"")
     commands.exec("/bossbar set " .. bossbarId .. " max " .. maxProgress)
@@ -81,6 +89,9 @@ function engine.run(mcfg)
                 print("Blue progress decaying: " .. blueProgress)
             end
         end
+        mcfg.runtimeState.blueProgress = blueProgress
+        mcfg.runtimeState.redProgress = redProgress
+        mcfg.runtimeState.currentOwner = currentOwner
 
         if redProgress > 0 then
             commands.exec("/bossbar set " .. bossbarId .. " value " .. redProgress)
@@ -121,6 +132,7 @@ function engine.run(mcfg)
         sleep(updateInterval)
         end
     end
+    if mcfg.checkpoint then mcfg.checkpoint("objective stopped") end
 end
 
 return engine
