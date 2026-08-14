@@ -2,7 +2,7 @@
 local service = {}
 local REQUEST = "grandop_operator_request"
 local RESPONSE = "grandop_operator_response"
-local CHANNEL = 31919
+local PROTOCOL = "grandop_operator"
 
 local function score(player, objective)
     local ok, _, value = commands.exec("/scoreboard players get " .. player .. " " .. objective)
@@ -10,7 +10,7 @@ local function score(player, objective)
 end
 
 local function reply(id, requestId, ok, message, data)
-    rednet.broadcast({ type = RESPONSE, target = id, request_id = requestId, ok = ok, message = message, data = data }, CHANNEL)
+    rednet.broadcast({ type = RESPONSE, target = id, request_id = requestId, ok = ok, message = message, data = data }, PROTOCOL)
 end
 
 local function audit(ctx, sender, action, message)
@@ -22,13 +22,9 @@ local function quotaPools(ctx)
 end
 
 local function status(ctx)
-    local result = { mission = ctx.mission.id, paused = ctx.operator.paused, stage = ctx.stage.current, quotas = {}, tickets = {} }
+    local result = { mission = ctx.mission.id, paused = ctx.operator.paused, stage = ctx.stage.current, quotas = {} }
     for pool in pairs(quotaPools(ctx)) do
         result.quotas[pool] = score(pool, "Troops_Strength")
-    end
-    if ctx.objective.localTickets then
-        result.tickets[ctx.objective.attackTeam] = score(ctx.objective.attackTeam, "tickets")
-        result.tickets[ctx.objective.defenseTeam] = score(ctx.objective.defenseTeam, "tickets")
     end
     return result
 end
@@ -38,7 +34,7 @@ function service.run(ctx, config)
     rednet.open(config.rednet_side)
     ctx.log("Operator service listening on Rednet; access is trusted at the command-computer boundary")
     while not ctx.operator.shutdown do
-        local sender, message = rednet.receive(CHANNEL, 0.25)
+        local sender, message = rednet.receive(PROTOCOL, 0.25)
         if sender and type(message) == "table" and message.type == REQUEST then
             local requestId = message.request_id
             local action, args = message.action, message.args or {}
@@ -52,6 +48,16 @@ function service.run(ctx, config)
                 ctx.operator.paused = false
                 audit(ctx, sender, action, "event resumed")
                 reply(sender, requestId, true, "Event resumed")
+            elseif action == "stage_set" then
+                local value = tonumber(args.value)
+                local stages = ctx.objective.captureZones or {}
+                if not value or value ~= math.floor(value) or value < 1 or value > #stages then
+                    reply(sender, requestId, false, "Invalid stage number")
+                else
+                    ctx.operator.stageRequest = value
+                    audit(ctx, sender, action, "stage " .. value .. " requested")
+                    reply(sender, requestId, true, "Stage " .. value .. " requested")
+                end
             elseif action == "quota_set" then
                 local pool, value = tostring(args.pool or ""), tonumber(args.value)
                 if not quotaPools(ctx)[pool] or not value or value < 0 or value > 10000 then
@@ -60,15 +66,6 @@ function service.run(ctx, config)
                     commands.exec("/scoreboard players set " .. pool .. " Troops_Strength " .. math.floor(value))
                     audit(ctx, sender, action, pool .. "=" .. math.floor(value))
                     reply(sender, requestId, true, pool .. " set", { value = score(pool, "Troops_Strength") })
-                end
-            elseif action == "ticket_set" then
-                local team, value = tostring(args.team or ""), tonumber(args.value)
-                if not ctx.objective.localTickets or (team ~= ctx.objective.attackTeam and team ~= ctx.objective.defenseTeam) or not value or value < 0 or value > 100000 then
-                    reply(sender, requestId, false, "Invalid ticket team or value")
-                else
-                    commands.exec("/scoreboard players set " .. team .. " tickets " .. math.floor(value))
-                    audit(ctx, sender, action, team .. "=" .. math.floor(value))
-                    reply(sender, requestId, true, team .. " tickets set", { value = score(team, "tickets") })
                 end
             elseif action == "shutdown" then
                 ctx.operator.shutdown = true

@@ -12,8 +12,6 @@
 
 local mc   = grandopRequire("lib.minecraft")
 local stage = grandopRequire("lib.stage_channel")
-local tickets = grandopRequire("lib.tickets")
-
 local engine = {}
 
 local function teamColor(team)
@@ -123,17 +121,6 @@ function engine.run(mcfg)
         end
     end
 
-    local function sendTickets(zoneIndex)
-        local reward = mcfg.ticketRewards and mcfg.ticketRewards[zoneIndex]
-        if reward then
-            if mcfg.localTickets then
-                tickets.applyLocal(mcfg.attackTeam, mcfg.defenseTeam, reward.a, reward.d)
-            elseif mcfg.ticketComputerId then
-                rednet.send(mcfg.ticketComputerId, tickets.format(reward.a, reward.d))
-            end
-        end
-    end
-
     local function gameEnd(winner, reason)
         state.ended = true
         if hooks.onGameEnd then hooks.onGameEnd(state) end
@@ -168,7 +155,6 @@ function engine.run(mcfg)
             state.zone = nextZone
             if mcfg.stageState then mcfg.stageState.current = state.zone end
         else
-            sendTickets(state.zone)
             mc.title('{"text":"Objective Captured! Stage ' .. state.zone .. ' Completed!","color":"green"}')
 
             if state.zone == #zones then
@@ -192,11 +178,19 @@ function engine.run(mcfg)
         if hooks.onStageChange then hooks.onStageChange(state, state.zone) end
     end
 
-    -- Initial setup
-    if mcfg.localTickets then
-        local starts = mcfg.ticketStart or {}
-        tickets.initialize(mcfg.attackTeam, mcfg.defenseTeam, starts.attack, starts.defense)
+    local function selectStage(stageNumber)
+        clearBeacon(currentZone())
+        state.zone = stageNumber
+        state.score = 0
+        if mcfg.stageState then mcfg.stageState.current = state.zone end
+        if hub then stage.broadcast(hub, state.zone) end
+        setBeacon(currentZone())
+        refreshSpawns()
+        updateBossbar()
+        print("Operator selected stage " .. state.zone)
     end
+
+    -- Initial setup
     initBossbar(mcfg, #zones)
     redstone.setOutput("back", false)
     sleep(0.1)
@@ -214,6 +208,11 @@ function engine.run(mcfg)
 
     -- Main loop
     while not state.ended and not (mcfg.operator and mcfg.operator.shutdown) do
+        if mcfg.operator and mcfg.operator.stageRequest then
+            local requested = mcfg.operator.stageRequest
+            mcfg.operator.stageRequest = nil
+            selectStage(requested)
+        end
         if mcfg.operator and mcfg.operator.paused then sleep(0.1) else
         if mcfg.attackerDepleted and mcfg.attackerDepleted() then
             return gameEnd(mcfg.defenseTeam, "attacker reinforcements depleted")

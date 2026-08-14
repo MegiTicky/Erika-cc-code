@@ -234,24 +234,15 @@ return {
         type = "staged_capture",
         stage_channel = 125,
         stageState = stageState,
-        localTickets = true,
-        ticketStart = { attack = 500, defense = 500 },
         bossbarId = 1,
         attackTeam = "Blue",
         defenseTeam = "Red",
-        ticketComputerId = 2,
         startZone = 1,
 
         captureZones = {
             { x = 4836, y = 19, z = 6160 },
             { x = 4711, y = 16, z = 5925 },
             { x = 4815, y = 28, z = 5561 },
-        },
-
-        ticketRewards = {
-            { a = 200, d = -50 },
-            { a = 200, d = -50 },
-            { a = 200, d = -50 },
         },
 
         capture = {
