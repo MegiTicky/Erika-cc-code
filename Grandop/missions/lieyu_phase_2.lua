@@ -272,5 +272,9 @@ return {
         Red = "japan",
     },
 
+    operator = {
+        quota_pools = { USMCSpawn = true, TownX_JPSpawn = true, TownY_JPSpawn = true, TownZ_JPSpawn = true },
+    },
+
     respawn = respawn,
 }

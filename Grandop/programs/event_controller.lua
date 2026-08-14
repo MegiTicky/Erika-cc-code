@@ -178,6 +178,7 @@ local state = {
     playerTankMap = {},
     tankslugtoID = {},
 }
+local operator = { paused = false, shutdown = false }
 
 local ctx = {
     mission = mission,
@@ -190,6 +191,7 @@ local ctx = {
     loadoutData = data,
     stage = stageHub,
     state = state,
+    operator = operator,
     log = print,
 }
 
@@ -205,6 +207,7 @@ else
 end
 
 local function objectiveLoop()
+    objective.operator = operator
     objectiveEngine.run(objective)
 end
 
@@ -229,6 +232,8 @@ local function creativeLoop()
 end
 
 local tasks = { objectiveLoop, bookLoop, stageListenerLoop, creativeLoop }
+local operatorService = grandopRequire("lib.operator_service")
+table.insert(tasks, function() operatorService.run(ctx, { rednet_side = "right" }) end)
 if respawn.reinforcement and respawn.reinforcement.loop then
     table.insert(tasks, function() respawn.reinforcement.loop(ctx) end)
 end

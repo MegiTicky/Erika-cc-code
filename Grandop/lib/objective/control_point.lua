@@ -19,6 +19,7 @@ function engine.run(mcfg)
     local capRate = mcfg.capRate or 10
     local decapRate = mcfg.decapRate or 10
     local decayRate = mcfg.decayRate or 2
+    local maxCaptureMultiplier = mcfg.maxCaptureMultiplier or 2.5
     local bossbarId = mcfg.bossbarId or "capturebar"
     local startTickets = mcfg.startTickets or 750
 
@@ -33,28 +34,31 @@ function engine.run(mcfg)
     commands.exec("/bossbar set " .. bossbarId .. " visible true")
     commands.exec("/bossbar set " .. bossbarId .. " players @a")
 
-    while true do
-        local redInZone = mc.playersInRange(redTeam, zonePos.x, zonePos.y, zonePos.z, captureRange)
-        local blueInZone = mc.playersInRange(blueTeam, zonePos.x, zonePos.y, zonePos.z, captureRange)
-        local redPresent, bluePresent = redInZone, blueInZone
+    while not (mcfg.operator and mcfg.operator.shutdown) do
+        if mcfg.operator and mcfg.operator.paused then sleep(0.1) else
+        local redCount = mc.playersInRangeCount(redTeam, zonePos.x, zonePos.y, zonePos.z, captureRange)
+        local blueCount = mc.playersInRangeCount(blueTeam, zonePos.x, zonePos.y, zonePos.z, captureRange)
+        local advantage = redCount - blueCount
 
-        if redPresent and not bluePresent then
+        if advantage > 0 then
+            local multiplier = mc.captureMultiplier(advantage, maxCaptureMultiplier)
             if blueProgress > 0 then
-                blueProgress = math.max(blueProgress - decapRate, 0)
+                blueProgress = math.max(blueProgress - multiplier * decapRate, 0)
                 print("Red is decapping Blue! Blue progress: " .. blueProgress)
             else
-                redProgress = math.min(redProgress + capRate, maxProgress)
+                redProgress = math.min(redProgress + multiplier * capRate, maxProgress)
                 print("Red capturing... Red progress: " .. redProgress)
             end
-        elseif bluePresent and not redPresent then
+        elseif advantage < 0 then
+            local multiplier = mc.captureMultiplier(math.abs(advantage), maxCaptureMultiplier)
             if redProgress > 0 then
-                redProgress = math.max(redProgress - decapRate, 0)
+                redProgress = math.max(redProgress - multiplier * decapRate, 0)
                 print("Blue is decapping Red! Red progress: " .. redProgress)
             else
-                blueProgress = math.min(blueProgress + capRate, maxProgress)
+                blueProgress = math.min(blueProgress + multiplier * capRate, maxProgress)
                 print("Blue capturing... Blue progress: " .. blueProgress)
             end
-        elseif redPresent and bluePresent then
+        elseif redCount > 0 then
             print("Contested! Progress paused.")
         else
             print("No players in zone. Progress paused.")
@@ -68,11 +72,11 @@ function engine.run(mcfg)
             print("Blue captured the zone!")
         else
             currentOwner = "NotCaptured"
-            if redProgress > 0 then
+            if redCount == 0 and blueCount == 0 and redProgress > 0 then
                 redProgress = math.max(redProgress - decayRate, 0)
                 print("Red progress decaying: " .. redProgress)
             end
-            if blueProgress > 0 then
+            if redCount == 0 and blueCount == 0 and blueProgress > 0 then
                 blueProgress = math.max(blueProgress - decayRate, 0)
                 print("Blue progress decaying: " .. blueProgress)
             end
@@ -115,6 +119,7 @@ function engine.run(mcfg)
         mc.setSpawnpoint(redTeam, redSpawn.x, redSpawn.y, redSpawn.z)
 
         sleep(updateInterval)
+        end
     end
 end
 

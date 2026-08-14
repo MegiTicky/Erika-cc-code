@@ -43,6 +43,7 @@ function engine.run(mcfg)
     local interval = capture.updateInterval or 0.001
     local threshold = capture.threshold or 200
     local mode = capture.mode or "forward"
+    local maxCaptureMultiplier = capture.maxCaptureMultiplier or 2.5
     local skipDelay = capture.skipCooldown or 3
     local announceDelay = capture.announceDelay or 2
     local reverseDelay = capture.reverseDelay or 30
@@ -212,13 +213,14 @@ function engine.run(mcfg)
     local lastBossbarPlayerRefresh = 0
 
     -- Main loop
-    while not state.ended do
+    while not state.ended and not (mcfg.operator and mcfg.operator.shutdown) do
+        if mcfg.operator and mcfg.operator.paused then sleep(0.1) else
         if mcfg.attackerDepleted and mcfg.attackerDepleted() then
             return gameEnd(mcfg.defenseTeam, "attacker reinforcements depleted")
         end
         local zone = currentZone()
-        local attackerDetected = mc.playersInRange(mcfg.attackTeam, zone.x, zone.y, zone.z, radius)
-        local defenderDetected = mc.playersInRange(mcfg.defenseTeam, zone.x, zone.y, zone.z, radius)
+        local attackerCount = mc.playersInRangeCount(mcfg.attackTeam, zone.x, zone.y, zone.z, radius)
+        local defenderCount = mc.playersInRangeCount(mcfg.defenseTeam, zone.x, zone.y, zone.z, radius)
 
         if mode == "bidirectional" then
             local defendersCanDecap = true
@@ -226,13 +228,13 @@ function engine.run(mcfg)
                 defendersCanDecap = hooks.defendersCanDecap(state)
             end
 
-            if defenderDetected and defendersCanDecap then
-                state.score = state.score - (capture.scoreChange or 3)
-            end
-            if attackerDetected then
-                state.score = state.score + (capture.scoreChange or 3)
-            end
-            if not defenderDetected and not attackerDetected then
+            if not defendersCanDecap then defenderCount = 0 end
+            local advantage = attackerCount - defenderCount
+            if advantage > 0 then
+                state.score = state.score + mc.captureMultiplier(advantage, maxCaptureMultiplier) * (capture.scoreChange or 3)
+            elseif advantage < 0 then
+                state.score = state.score - mc.captureMultiplier(math.abs(advantage), maxCaptureMultiplier) * (capture.scoreChange or 3)
+            elseif attackerCount == 0 then
                 if state.score > 0 then
                     state.score = math.max(0, state.score - (capture.neutralDecay or 1))
                 elseif state.score < 0 then
@@ -255,11 +257,12 @@ function engine.run(mcfg)
             end
         else
             -- forward mode
-            if defenderDetected then
-                state.score = state.score + (capture.defenseScore or -1)
-            elseif attackerDetected then
-                state.score = state.score + (capture.attackScore or 1)
-            else
+            local advantage = attackerCount - defenderCount
+            if advantage > 0 then
+                state.score = state.score + mc.captureMultiplier(advantage, maxCaptureMultiplier) * (capture.attackScore or 1)
+            elseif advantage < 0 then
+                state.score = state.score + mc.captureMultiplier(math.abs(advantage), maxCaptureMultiplier) * (capture.defenseScore or -1)
+            elseif attackerCount == 0 then
                 state.score = state.score + (capture.neutralScore or -1)
             end
             if state.score < 0 then state.score = 0 end
@@ -286,6 +289,7 @@ function engine.run(mcfg)
         refreshSpawns()
 
         sleep(interval)
+        end
     end
 end
 

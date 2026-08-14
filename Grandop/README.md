@@ -166,6 +166,42 @@ Stop it from that same computer terminal:
 Ctrl+T
 ```
 
+### Dedicated Operator Computer
+
+The first operator-backend release provides status, pause/resume, reinforcement
+quota changes, ticket changes, and graceful event shutdown from a separate
+ComputerCraft computer. It does not yet provide state recovery, stage changes,
+artillery controls, chat commands, or newcomer onboarding.
+
+The complete Phase 2 install includes the operator UI. Pick-block clone the
+event computer, attach a modem on `right`, and use the clone for backend access.
+On the cloned Computer `19`, run:
+
+```text
+run
+```
+
+Both computers need a modem on the configured side, `right` by default. The
+included `/data/operator_config.lua` uses that side:
+
+```lua
+return {
+    rednet_side = "right",
+}
+```
+
+Anyone able to access the event computer or its cloned operator computer can
+use the backend. No computer-ID allowlist is required. Restart the event
+computer after installing updates. On the clone, choose `Open operator terminal`
+from `run`, or run this directly:
+
+```text
+run operator
+```
+
+Every accepted operator action is written to the event log. The terminal asks
+for `YES` before changing a value, pausing/resuming, or shutting down the event.
+
 Always stop the previous event before starting another instance. Running two
 event controllers at the same time causes duplicate menu handling, deployment,
 and objective updates.
@@ -229,14 +265,14 @@ The sidebar objective is `Troops_Strength`:
 - `TownX_JPSpawn`, `TownY_JPSpawn`, and `TownZ_JPSpawn` start at 30, 30, and 40.
 - The sidebar refreshes immediately after a successful deployment.
 
-If a displayed troop value is wrong, inspect the corresponding `spawnCount`
-entry and restart the event after correcting the scoreboard state:
+The Phase 2 remaining-reinforcement counters are the displayed
+`Troops_Strength` scores:
 
 ```text
-scoreboard players get USMC spawnCount
-scoreboard players get TownX_JP spawnCount
-scoreboard players get TownY_JP spawnCount
-scoreboard players get TownZ_JP spawnCount
+scoreboard players get USMCSpawn Troops_Strength
+scoreboard players get TownX_JPSpawn Troops_Strength
+scoreboard players get TownY_JPSpawn Troops_Strength
+scoreboard players get TownZ_JPSpawn Troops_Strength
 ```
 
 ## Updating The Event Computer

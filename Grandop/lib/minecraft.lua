@@ -17,6 +17,26 @@ function mc.playersInRange(team, x, y, z, range)
     )
 end
 
+-- Returns the number of team members in a capture zone. This includes players
+-- and team-assigned entities such as Steve's Army soldiers. The command result
+-- is the number of affected entities.
+function mc.playersInRangeCount(team, x, y, z, range)
+    local ok, _, count = commands.exec(
+        "execute as @e[team=" .. team ..
+        ",x=" .. x .. ",y=" .. y .. ",z=" .. z ..
+        ",distance=.." .. range .. "] at @s run effect give @s saturation 1"
+    )
+    if not ok then return 0 end
+    return tonumber(count) or 0
+end
+
+-- Extra capture units give diminishing returns: 1 unit is normal speed, then
+-- the square-root curve applies until the configured multiplier cap.
+function mc.captureMultiplier(advantage, maxMultiplier)
+    if advantage < 1 then return 0 end
+    return math.min(math.sqrt(advantage), maxMultiplier or 2.5)
+end
+
 function mc.setSpawnpoint(team, x, y, z)
     commands.exec("/spawnpoint @a[team=" .. team .. "] " .. x .. " " .. y .. " " .. z)
 end

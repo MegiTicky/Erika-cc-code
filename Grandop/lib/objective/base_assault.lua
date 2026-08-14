@@ -17,12 +17,9 @@ function engine.run(mcfg)
     local capRate = mcfg.capRate or 1
     local decapRate = mcfg.decapRate or 1
     local stall = mcfg.stall or 1
+    local maxCaptureMultiplier = mcfg.maxCaptureMultiplier or 2.5
 
     local bases = mcfg.bases -- { blue = {name, x, y, z, owner, prog, barId}, red = {...} }
-
-    local function anyone(selector)
-        return commands.exec("execute if entity " .. selector) and true or false
-    end
 
     local function setupBossbars()
         for key, b in pairs(bases) do
@@ -66,11 +63,8 @@ function engine.run(mcfg)
         local b = bases[key]
         local px, py, pz = b.pos.x, b.pos.y, b.pos.z
 
-        local selectorBlue = "@a[team=" .. BLUE .. ",x=" .. px .. ",y=" .. py .. ",z=" .. pz .. ",distance=.." .. captureRange .. "]"
-        local selectorRed  = "@a[team=" .. RED .. ",x=" .. px .. ",y=" .. py .. ",z=" .. pz .. ",distance=.." .. captureRange .. "]"
-
-        local blueHere = anyone(selectorBlue)
-        local redHere = anyone(selectorRed)
+        local blueCount = mc.playersInRangeCount(BLUE, px, py, pz, captureRange)
+        local redCount = mc.playersInRangeCount(RED, px, py, pz, captureRange)
 
         local attacker, defender
         if b.owner == BLUE then
@@ -79,30 +73,14 @@ function engine.run(mcfg)
             attacker, defender = BLUE, RED
         end
 
-        if blueHere then commands.exec("execute as " .. selectorBlue .. " run effect give @s saturation 1") end
-        if redHere then commands.exec("execute as " .. selectorRed .. " run effect give @s saturation 1") end
-
-        if blueHere and redHere then
-            if stall ~= 0 and b.prog > 0 then
-                b.prog = math.max(0, b.prog - stall)
-            end
-        else
-            if attacker == RED then
-                if redHere and not blueHere then
-                    b.prog = math.min(maxProgress, b.prog + capRate)
-                elseif blueHere and not redHere then
-                    if b.prog > 0 then b.prog = math.max(0, b.prog - decapRate) end
-                end
-            else
-                if blueHere and not redHere then
-                    b.prog = math.min(maxProgress, b.prog + capRate)
-                elseif redHere and not blueHere then
-                    if b.prog > 0 then b.prog = math.max(0, b.prog - decapRate) end
-                end
-            end
-        end
-
-        if not blueHere and not redHere then
+        local attackerCount = attacker == BLUE and blueCount or redCount
+        local defenderCount = defender == BLUE and blueCount or redCount
+        local advantage = attackerCount - defenderCount
+        if advantage > 0 then
+            b.prog = math.min(maxProgress, b.prog + mc.captureMultiplier(advantage, maxCaptureMultiplier) * capRate)
+        elseif advantage < 0 and b.prog > 0 then
+            b.prog = math.max(0, b.prog - mc.captureMultiplier(math.abs(advantage), maxCaptureMultiplier) * decapRate)
+        elseif attackerCount == 0 then
             if b.prog > 0 then b.prog = math.max(0, b.prog - stall) end
         end
 
@@ -119,7 +97,8 @@ function engine.run(mcfg)
         return false
     end
 
-    while true do
+    while not (mcfg.operator and mcfg.operator.shutdown) do
+        if mcfg.operator and mcfg.operator.paused then sleep(0.1) else
         mc.setSpawnpoint(BLUE, blueSpawn.x, blueSpawn.y, blueSpawn.z)
         mc.setSpawnpoint(RED, redSpawn.x, redSpawn.y, redSpawn.z)
 
@@ -127,6 +106,7 @@ function engine.run(mcfg)
         if stepBase("red") then break end
 
         sleep(updateInterval)
+        end
     end
 end
 

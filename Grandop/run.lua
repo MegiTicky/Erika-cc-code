@@ -9,6 +9,7 @@
 --   run tickets  <mission>           ticket server
 --   run loadout   [loadout_file]     loadout service
 --   run artillery                    artillery server
+--   run operator                     dedicated operator terminal
 --   run gen       [side]              export chest items for a loadout
 --   run event     <mission> [flags]  complete unified event controller
 
@@ -22,6 +23,7 @@ local function usage()
     print("       run tickets <mission>")
     print("       run loadout [loadout_file]")
     print("       run artillery")
+    print("       run operator")
     print("       run gen [side]")
     print("       run event <mission> [--validate]")
 end
@@ -110,6 +112,9 @@ local function interactive()
     if fs.exists("/programs/artillery_server.lua") then
         table.insert(entries, { label = "Start artillery server", program = "programs/artillery_server" })
     end
+    if fs.exists("/programs/operator.lua") then
+        table.insert(entries, { label = "Open operator terminal", program = "programs/operator" })
+    end
     if fs.exists("/tools/loadout_generator.lua") then
         table.insert(entries, { label = "Export chest items for a loadout", program = "tools/loadout_generator", generator = true })
     end
@@ -155,6 +160,7 @@ local programs = {
     tickets = "programs/ticket_server",
     loadout = "programs/loadout_service",
     artillery = "programs/artillery_server",
+    operator = "programs/operator",
     gen = "tools/loadout_generator",
     event = "programs/event_controller",
 }
