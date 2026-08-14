@@ -1,0 +1,349 @@
+# Lieyu Phase 2 Event Runbook
+
+This document covers deploying, configuring, starting, updating, and operating
+the unified `lieyu_phase_2` Grandop event.
+
+## What Runs On The Event Computer
+
+One Command Computer runs the complete event:
+
+- The staged-capture objective and bossbar.
+- The chat-button infantry and tank respawn menus.
+- Infantry class loadouts and teleports.
+- Tank deployment, stock, and cooldown tracking.
+- The `Troops_Strength` sidebar and reinforcement quotas.
+- Japan town retreat handling as objectives advance.
+
+The event command is:
+
+```text
+run event lieyu_phase_2
+```
+
+## Requirements
+
+### Computer And Peripherals
+
+- A Command Computer. The program uses Minecraft commands through `commands.exec`.
+- An `sp_radar` peripheral attached to the event computer. Tanks are enabled, so
+  the event refuses to start without it.
+- A monitor is optional. The unified event uses chat menus; it does not require a
+  monitor for player respawns.
+- HTTP must be enabled in ComputerCraft to use the GitHub installer.
+
+### World Setup
+
+- The computer must be in the same dimension as the Lieyu battlefield. The
+  configured positions and Minecraft selectors are dimension-local.
+- Players must be assigned to these Minecraft scoreboard teams before entering a
+  staging room:
+
+```text
+team join Blue <player>
+team join Red <player>
+```
+
+- `Blue` is USMC and attacks.
+- `Red` is Japan and defends.
+- The Steve's Army mod is optional for the base event. It is required only if
+  a loadout includes Steve's Army items, such as soldier spawn eggs.
+
+### Configured Staging Rooms
+
+| Team | Faction | Center | Radius |
+| --- | --- | --- | --- |
+| Blue | USMC | `4243, 308, 6653` | 10 blocks |
+| Red | japan | `4237, 308, 6653` | 10 blocks |
+
+Players in a staging room receive the respawn menu in chat. Leaving the room
+clears their incomplete selection session.
+
+## First-Time Installation
+
+On the new event computer, download the installer once:
+
+```text
+wget https://raw.githubusercontent.com/MegiTicky/Erika-cc-code/main/install.lua install
+```
+
+Start the interactive installer:
+
+```text
+install
+```
+
+Choose:
+
+```text
+1. Lieyu Phase 2 - Complete Event System
+```
+
+The installer asks once before replacing existing files. It installs the event,
+the loadout generator, and this runbook as `README_LIEYU_PHASE_2.md`.
+
+The equivalent non-interactive command is:
+
+```text
+install event lieyu_phase_2 --force
+```
+
+The older runtime-only bundle remains available for advanced use:
+
+```text
+install bundle Grandop/manifests/phase_2_event.txt --force
+```
+
+Validate the installed files before starting the event:
+
+```text
+run event lieyu_phase_2 --validate
+```
+
+Expected output:
+
+```text
+Mission configuration valid: lieyu_phase_2
+```
+
+## Fresh Match Initialization
+
+The mission deliberately preserves persistent state by default:
+
+- `spawnCount` preserves troop consumption between controller restarts.
+- `tanksList.txt` preserves current tank stock between controller restarts.
+
+For a brand-new match or an intentional full reset, edit
+`missions/lieyu_phase_2.lua` on the event computer and temporarily change:
+
+```lua
+resetTanks = false,
+resetSpawns = false,
+```
+
+to:
+
+```lua
+resetTanks = true,
+resetSpawns = true,
+```
+
+Start the event once, then stop it with `Ctrl+T`. Change both values back to
+`false` before the normal event start. Leaving either value set to `true` will
+reset the relevant persistent state every time the event starts.
+
+The reset initializes these counters:
+
+| Counter | Initial value | Meaning |
+| --- | --- | --- |
+| `USMC spawnCount` | 0 | USMC deployments consumed |
+| `TownX_JP spawnCount` | 0 | Japan Town X deployments consumed |
+| `TownY_JP spawnCount` | 0 | Japan Town Y deployments consumed |
+| `TownZ_JP spawnCount` | 0 | Japan Town Z deployments consumed |
+
+## Starting And Stopping
+
+Start the event from the event computer terminal:
+
+```text
+run event lieyu_phase_2
+```
+
+Stop it from that same computer terminal:
+
+```text
+Ctrl+T
+```
+
+Always stop the previous event before starting another instance. Running two
+event controllers at the same time causes duplicate menu handling, deployment,
+and objective updates.
+
+Each start writes a log under:
+
+```text
+/logs/event_lieyu_phase_2_<timestamp>.log
+```
+
+The terminal prints the exact log filename when the event starts.
+
+## Player Respawn Flow
+
+1. Assign the player to `Blue` or `Red`.
+2. Send the player to that team's staging room.
+3. The player clicks a chat button for `Infantry` or `Tank`.
+4. Infantry players select a class and an available spawn location.
+5. Tank players select a tank and a vehicle spawn location.
+6. The event applies the loadout, teleports/deploys the player, consumes the
+   deployment quota, and updates the sidebar.
+
+The menu uses chat buttons, not written books or `/trigger` objectives. The
+player should click each menu option once and wait for the next menu message.
+
+### Infantry Classes
+
+- USMC: `anti_tank`, `assault`, `commander`, `engineer`, `machine_gunner`,
+  and `medic`.
+- Japan: classes are loaded from `data/loadouts/lieyu_phase_2.json`.
+
+### Infantry Spawns
+
+USMC:
+
+| Stage | Spawn |
+| --- | --- |
+| 1 | `S1 Main Town`, `USCommander` |
+| 2 | `S2 Town X`, `USCommander` |
+| 3 | `S3 Town Y`, `USCommander` |
+
+Japan can select Town X, Town Y, or Town Z. The event's retreat handling
+exhausts Town X when stage 2 begins and Town Y when stage 3 begins.
+
+### Tanks
+
+- USMC starts with three `sherman75usmc` tanks.
+- Japan starts with two `chinu` tanks and one `horo` tank.
+- Tank cooldowns are 180 seconds.
+- Tank stock is stored in `tanksList.txt` on the event computer.
+
+## Tickets And Troop Strength
+
+The capture objective starts with 500 tickets for each team. Capturing an
+objective awards the attacker 200 tickets and removes 50 defender tickets.
+
+The sidebar objective is `Troops_Strength`:
+
+- `USMCSpawn` starts at 100 and decreases once for each successful USMC infantry
+  or tank deployment.
+- `TownX_JPSpawn`, `TownY_JPSpawn`, and `TownZ_JPSpawn` start at 30, 30, and 40.
+- The sidebar refreshes immediately after a successful deployment.
+
+If a displayed troop value is wrong, inspect the corresponding `spawnCount`
+entry and restart the event after correcting the scoreboard state:
+
+```text
+scoreboard players get USMC spawnCount
+scoreboard players get TownX_JP spawnCount
+scoreboard players get TownY_JP spawnCount
+scoreboard players get TownZ_JP spawnCount
+```
+
+## Updating The Event Computer
+
+After new Grandop code is pushed to GitHub, use the same installed `install`
+program. Run the interactive menu:
+
+```text
+install
+```
+
+or use the named profile directly:
+
+```text
+install event lieyu_phase_2 --force
+```
+
+Then stop and start the event so Lua reloads the updated files:
+
+```text
+Ctrl+T
+run event lieyu_phase_2
+```
+
+`install.lua` itself does not need to be reinstalled for normal event updates.
+It always downloads files from the repository's `main` branch. Reinstall it only
+when `install.lua` itself changes.
+
+## Editing Loadouts
+
+Edit this file in the repository or on the event computer:
+
+```text
+data/loadouts/lieyu_phase_2.json
+```
+
+Each class has an `items` array. Standard item entries are given directly to the
+player:
+
+```json
+{ "item": "minecraft:iron_shovel", "count": 1 }
+```
+
+Armor entries replace the corresponding equipment slot:
+
+```json
+{ "slot": "chest", "item": "combatgear:pacific_chestplate" }
+```
+
+After editing the repository copy, commit and push it. Update the event computer
+with the bundle command above, then restart the event.
+
+### Steve's Army Spawn Eggs
+
+Steve's Army soldier eggs can be added directly to a class loadout:
+
+```json
+{ "item": "steves_army:soldier_spawn_egg", "count": 1 }
+```
+
+The player must place the egg themselves. This is intentional: the current
+Steve's Army spawn egg assigns the player as owner, assigns the selected fire
+team, and adds the soldier to that player's squad. Do not replace this with a
+plain `/summon steves_army:soldier`; a plain summon bypasses that player-owned
+squad setup.
+
+A basic spawn egg creates a default soldier. A pre-equipped NPC requires a
+tested egg `EntityTag` inventory preset from Steve's Army. Test those presets in
+a separate world before adding them to the event loadout.
+
+## Troubleshooting
+
+### Event Refuses To Start: `tanks require an sp_radar peripheral`
+
+Attach an `sp_radar` to the Command Computer, then start again. Alternatively,
+disable tanks in the mission configuration only if the event is intentionally
+infantry-only.
+
+### No Respawn Menu Appears
+
+- Confirm the player is on `Blue` or `Red`, not a faction or private team.
+- Confirm the player is within 10 blocks of the correct staging-room center.
+- Confirm the event is running and inspect the newest `/logs/event_...` file.
+- Ensure another event controller is not already running.
+
+### A Menu Works But Nothing Is Given Or Teleported
+
+- Inspect the latest event log for `Mode selected`, `Class selected`, and
+  `Infantry spawn selected` entries.
+- Confirm the target class and spawn exist in the loadout and mission files.
+- Confirm the Command Computer has command permissions.
+- Restart the event after updating `book.lua`, the mission file, or loadouts.
+
+### Troops Strength Does Not Change
+
+- Confirm the deployment reached `Infantry spawn selected` or completed tank
+  deployment in the event log.
+- Check the matching `spawnCount` scoreboard entry.
+- Confirm the current event computer has the updated
+  `missions/lieyu_phase_2.lua` and `lib/respawn/book.lua` from the event bundle.
+- Restart the event after installing updates.
+
+### Tank Deployment Fails
+
+- Confirm `sp_radar` is attached and working.
+- Check that a tank remains in `tanksList.txt`.
+- Wait for the 180-second tank cooldown if the menu says it is active.
+- Verify the selected vehicle spawn location is valid and unobstructed.
+
+## Important Files
+
+| Path | Purpose |
+| --- | --- |
+| `run` | Grandop launcher on the ComputerCraft computer |
+| `programs/event_controller.lua` | Unified event runner |
+| `missions/lieyu_phase_2.lua` | Map locations, quotas, vehicles, stages, and features |
+| `data/loadouts/lieyu_phase_2.json` | Infantry class items and armor |
+| `lib/respawn/book.lua` | Chat-button respawn state machine |
+| `lib/respawn/vehicles.lua` | Tank deployment and stock handling |
+| `tanksList.txt` | Persistent current tank stock on the event computer |
+| `/logs/event_lieyu_phase_2_*.log` | Runtime event logs |
+| `Grandop/manifests/phase_2_event.txt` | GitHub installation bundle manifest |

@@ -1,0 +1,18 @@
+# Complete Lieyu Phase 2 event system, loadout generator, and operator runbook
+Grandop/run.lua|run
+Grandop/programs/event_controller.lua|programs/event_controller.lua
+Grandop/lib/json.lua|lib/json.lua
+Grandop/lib/bootstrap.lua|lib/bootstrap.lua
+Grandop/lib/loadout.lua|lib/loadout.lua
+Grandop/lib/minecraft.lua|lib/minecraft.lua
+Grandop/lib/monitor_ui.lua|lib/monitor_ui.lua
+Grandop/lib/stage_channel.lua|lib/stage_channel.lua
+Grandop/lib/tickets.lua|lib/tickets.lua
+Grandop/lib/objective/staged_capture.lua|lib/objective/staged_capture.lua
+Grandop/lib/respawn/book.lua|lib/respawn/book.lua
+Grandop/lib/respawn/vehicles.lua|lib/respawn/vehicles.lua
+Grandop/lib/services/creative_area.lua|lib/services/creative_area.lua
+Grandop/missions/lieyu_phase_2.lua|missions/lieyu_phase_2.lua
+Grandop/data/loadouts/lieyu_phase_2.json|data/loadouts/lieyu_phase_2.json
+Grandop/tools/loadout_generator.lua|tools/loadout_generator.lua
+Grandop/README.md|README_LIEYU_PHASE_2.md

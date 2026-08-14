@@ -1,11 +1,16 @@
--- Download one file from the Erika ComputerCraft Code repository.
--- Usage: install <repository path> [destination] [--force]
+-- Download files from the Erika ComputerCraft Code repository.
+-- With no arguments, show the operator installation menu.
+-- Usage: install [event lieyu_phase_2] [--force]
+--        install <repository path> [destination] [--force]
+--        install bundle <manifest path> [--force]
 
 local REPOSITORY = "MegiTicky/Erika-cc-code"
 local BRANCH = "main"
 
 local function usage()
-    print("Usage: install <repository path> [destination] [--force]")
+    print("Usage: install")
+    print("       install event lieyu_phase_2 [--force]")
+    print("       install <repository path> [destination] [--force]")
     print("       install bundle <manifest path> [--force]")
     print("Example: install Utility/matrix.lua matrix.lua")
 end
@@ -33,6 +38,13 @@ local function basename(path)
 end
 
 local sourcePath, destination, force = ...
+
+local PROFILES = {
+    lieyu_phase_2 = {
+        label = "Lieyu Phase 2 - Complete Event System",
+        manifest = "Grandop/manifests/phase_2_complete.txt",
+    },
+}
 
 local function download(source, target, overwrite)
     if fs.exists(target) and not overwrite then
@@ -77,51 +89,120 @@ local function download(source, target, overwrite)
     return true
 end
 
-if sourcePath == "bundle" then
-    local manifestPath = destination
-    local overwrite = force == "--force"
-    if not manifestPath or manifestPath == "" then
-        usage()
-        return
-    end
-
-    local manifestUrl = "https://raw.githubusercontent.com/" .. REPOSITORY .. "/" .. BRANCH .. "/" .. encodePath(manifestPath)
-    local response, reason = http.get(manifestUrl)
+local function fetch(url, failureLabel)
+    local response, reason = http.get(url)
     if not response then
-        printError("Manifest download failed: " .. tostring(reason))
-        return
+        printError(failureLabel .. " failed: " .. tostring(reason))
+        return nil
     end
 
     local status = response.getResponseCode and response.getResponseCode() or 200
     if status ~= 200 then
         response.close()
-        printError("Manifest download failed with HTTP status " .. tostring(status))
-        return
+        printError(failureLabel .. " failed with HTTP status " .. tostring(status))
+        return nil
     end
 
-    local manifest = response.readAll()
+    local contents = response.readAll()
     response.close()
+    return contents
+end
 
-    local installed = 0
+local function readManifest(manifestPath)
+    local url = "https://raw.githubusercontent.com/" .. REPOSITORY .. "/" .. BRANCH .. "/" .. encodePath(manifestPath)
+    local manifest = fetch(url, "Manifest download")
+    if not manifest then return nil end
+
+    local entries = {}
     for line in manifest:gmatch("[^\r\n]+") do
         line = line:gsub("^%s+", ""):gsub("%s+$", "")
         if line ~= "" and not line:match("^#") then
             local source, target = line:match("^([^|]+)|(.+)$")
             if not source then
                 printError("Invalid manifest line: " .. line)
-                return
+                return nil
             end
-            source = source:gsub("^%s+", ""):gsub("%s+$", "")
-            target = target:gsub("^%s+", ""):gsub("%s+$", "")
-            if not download(source, target, overwrite) then return end
-            installed = installed + 1
+            entries[#entries + 1] = {
+                source = source:gsub("^%s+", ""):gsub("%s+$", ""),
+                target = target:gsub("^%s+", ""):gsub("%s+$", ""),
+            }
         end
     end
-    print("Bundle installed: " .. installed .. " files")
+    return entries
+end
+
+local function installEntries(entries, overwrite)
+    local installed = 0
+    for _, entry in ipairs(entries) do
+        if not download(entry.source, entry.target, overwrite) then return false end
+        installed = installed + 1
+    end
+    print("Installed " .. installed .. " files")
+    return true
+end
+
+local function askOverwrite(entries)
+    local existing = {}
+    for _, entry in ipairs(entries) do
+        if fs.exists(entry.target) then existing[#existing + 1] = entry.target end
+    end
+    if #existing == 0 then return true end
+
+    print("The selected install will replace " .. #existing .. " existing file(s).")
+    print("Replace all selected files? (y/n)")
+    local answer = io.read()
+    return answer and answer:lower() == "y"
+end
+
+local function installManifest(manifestPath, overwrite, profileLabel)
+    print("Loading " .. (profileLabel or manifestPath) .. "...")
+    local entries = readManifest(manifestPath)
+    if not entries then return false end
+    if not overwrite and not askOverwrite(entries) then
+        print("Installation cancelled.")
+        return false
+    end
+    return installEntries(entries, true)
+end
+
+local function showMenu()
+    print("=== Erika ComputerCraft Installer ===")
+    print("1. " .. PROFILES.lieyu_phase_2.label)
+    print("2. Exit")
+    io.write("Select an option: ")
+    local choice = io.read()
+    if choice == "1" then
+        return installManifest(PROFILES.lieyu_phase_2.manifest, false, PROFILES.lieyu_phase_2.label)
+    end
+    print("Installation cancelled.")
+    return false
+end
+
+if not sourcePath then
+    showMenu()
     return
 end
 
-if not sourcePath or sourcePath == "" then
+if sourcePath == "event" then
+    if destination ~= "lieyu_phase_2" then
+        usage()
+        return
+    end
+    installManifest(PROFILES.lieyu_phase_2.manifest, force == "--force", PROFILES.lieyu_phase_2.label)
+    return
+end
+
+if sourcePath == "bundle" then
+    local manifestPath = destination
+    if not manifestPath or manifestPath == "" then
+        usage()
+        return
+    end
+    installManifest(manifestPath, force == "--force")
+    return
+end
+
+if sourcePath == "" then
     usage()
     return
 end

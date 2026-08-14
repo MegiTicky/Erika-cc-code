@@ -51,6 +51,14 @@ install "Utility/matrix.lua" matrix.lua
 install "1 Air exclusive/Z-10Control.lua" startup
 ```
 
+For the complete Lieyu Phase 2 event system, run `install` with no arguments
+after downloading it. The interactive menu installs the event runtime, loadout
+generator, and operator runbook. The named non-interactive form is:
+
+```text
+install event lieyu_phase_2 --force
+```
+
 The destination defaults to the source filename. Existing files are protected
 from accidental replacement; pass `--force` as the final argument when an
 explicit replacement is intended:
