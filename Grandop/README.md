@@ -286,6 +286,38 @@ Armor entries replace the corresponding equipment slot:
 { "slot": "chest", "item": "combatgear:pacific_chestplate" }
 ```
 
+### Exporting Chest Items
+
+To export a chest's contents for a loadout, use the interactive `run` menu and
+choose `Export chest items for a loadout`. It prompts only for the inventory
+side; leave it blank to use the first attached inventory.
+
+The direct command is:
+
+```text
+run gen
+```
+
+or, for a chest on a specific side:
+
+```text
+run gen left
+```
+
+The exporter does not edit any existing loadout JSON. It writes this file at the
+computer root:
+
+```text
+/generated_loadout_items.json
+```
+
+Open the computer's folder from your PC, copy the entire JSON array from that
+file, and replace the desired class's `items` array in
+`data/loadouts/lieyu_phase_2.json`. The export includes item IDs, counts, and
+full NBT when the chest is directly adjacent to a Command Computer. Add
+armor-slot metadata manually when needed, for example
+`"slot": "chest"`.
+
 After editing the repository copy, commit and push it. Update the event computer
 with the bundle command above, then restart the event.
 

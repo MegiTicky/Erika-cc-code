@@ -16,8 +16,9 @@ local retreat = {
 local stageState = { current = 1 }
 
 local function scoreboardValue(player, objective)
-    local ok, output = commands.exec("/scoreboard players get " .. player .. " " .. objective)
+    local ok, output, value = commands.exec("/scoreboard players get " .. player .. " " .. objective)
     if not ok then return 0 end
+    if tonumber(value) then return tonumber(value) end
     for _, line in ipairs(output or {}) do
         local value = tostring(line):match("has%s+(-?%d+)")
         if value then return tonumber(value) end
@@ -25,9 +26,28 @@ local function scoreboardValue(player, objective)
     return 0
 end
 
+local function setStrength(player, value)
+    local ok, reason = commands.exec("/scoreboard players set " .. player .. " Troops_Strength " .. value)
+    if not ok then
+        print("Strength update failed for " .. player .. ": " .. textutils.serialise(reason))
+        return false
+    end
+    local actual = scoreboardValue(player, "Troops_Strength")
+    if actual ~= value then
+        print("Strength readback mismatch for " .. player .. ": expected " .. value .. ", got " .. actual)
+        return false
+    end
+    return true
+end
+
+local function strengthPlayer(country, townName)
+    if country == "USMC" then return "USMCSpawn" end
+    return ("Town%s_JPSpawn"):format(townName:sub(6))
+end
+
 local respawn
 respawn = {
-    loadout_file = "data/loadouts/lieyu_phase_2.json",
+    loadout_file = "data/loadouts/lieyu_phase_2_new.json",
     tankListFile = "tanksList.txt",
     -- Keep ROM startup unattended. Change these to true for an explicit reset.
     resetTanks = false,
@@ -112,73 +132,48 @@ respawn = {
     end,
 
     initScoreboard = function(reset)
-        if reset then
-            commands.exec("/scoreboard objectives add spawnCount dummy")
-            commands.exec("/team add USMC")
-            commands.exec("/team add TownX_JP")
-            commands.exec("/team add TownY_JP")
-            commands.exec("/team add TownZ_JP")
-            commands.exec("/scoreboard players set USMC spawnCount 0")
-            commands.exec("/scoreboard players set TownX_JP spawnCount 0")
-            commands.exec("/scoreboard players set TownY_JP spawnCount 0")
-            commands.exec("/scoreboard players set TownZ_JP spawnCount 0")
-        end
         commands.exec("/scoreboard objectives add Troops_Strength dummy")
+        if reset then
+            setStrength("USMCSpawn", 100)
+            setStrength("TownX_JPSpawn", townQuotas["Town X"])
+            setStrength("TownY_JPSpawn", townQuotas["Town Y"])
+            setStrength("TownZ_JPSpawn", townQuotas["Town Z"])
+        end
         commands.exec("/scoreboard objectives setdisplay sidebar Troops_Strength")
         commands.exec("/team add USMCSpawn")
         commands.exec("/team add TownX_JPSpawn")
         commands.exec("/team add TownY_JPSpawn")
         commands.exec("/team add TownZ_JPSpawn")
 
-        local us = scoreboardValue("USMC", "spawnCount")
-        local x = scoreboardValue("TownX_JP", "spawnCount")
-        local y = scoreboardValue("TownY_JP", "spawnCount")
-        local z = scoreboardValue("TownZ_JP", "spawnCount")
-        commands.exec("/scoreboard players set USMCSpawn Troops_Strength " .. (100 - (tonumber(us) or 0)))
-        commands.exec("/scoreboard players set TownX_JPSpawn Troops_Strength " .. (townQuotas["Town X"] - (tonumber(x) or 0)))
-        commands.exec("/scoreboard players set TownY_JPSpawn Troops_Strength " .. (townQuotas["Town Y"] - (tonumber(y) or 0)))
-        commands.exec("/scoreboard players set TownZ_JPSpawn Troops_Strength " .. (townQuotas["Town Z"] - (tonumber(z) or 0)))
+        -- Do not overwrite live reinforcement values unless an explicit reset was requested.
+        if not reset then
+            setStrength("USMCSpawn", scoreboardValue("USMCSpawn", "Troops_Strength"))
+            setStrength("TownX_JPSpawn", scoreboardValue("TownX_JPSpawn", "Troops_Strength"))
+            setStrength("TownY_JPSpawn", scoreboardValue("TownY_JPSpawn", "Troops_Strength"))
+            setStrength("TownZ_JPSpawn", scoreboardValue("TownZ_JPSpawn", "Troops_Strength"))
+        end
     end,
 
     hasQuota = function(country, townName)
-        if country == "USMC" then
-            return (100 - scoreboardValue("USMC", "spawnCount")) > 0
-        end
-        local quota = townQuotas[townName]
-        if not quota then return false end
-        local player = ("Town%s_JP"):format(townName:sub(6))  -- "Town X" -> "TownX_JP"
-        return (quota - scoreboardValue(player, "spawnCount")) > 0
+        if country ~= "USMC" and not townQuotas[townName] then return false end
+        return scoreboardValue(strengthPlayer(country, townName), "Troops_Strength") > 0
     end,
 
     decrementQuota = function(country, townName)
-        if country == "USMC" then
-            local count = scoreboardValue("USMC", "spawnCount")
-            if count < 100 then
-                commands.exec("/scoreboard players add USMC spawnCount 1")
-                return true
-            end
-            return false
-        end
-        local quota = townQuotas[townName]
-        if not quota then return false end
-        local player = ("Town%s_JP"):format(townName:sub(6))
-        local count = scoreboardValue(player, "spawnCount")
-        if count < quota then
-            commands.exec("/scoreboard players add " .. player .. " spawnCount 1")
+        if country ~= "USMC" and not townQuotas[townName] then return false end
+        local player = strengthPlayer(country, townName)
+        local remaining = scoreboardValue(player, "Troops_Strength")
+        if remaining < 1 then return false end
+        local updated = remaining - 1
+        if setStrength(player, updated) then
+            print("Reinforcements: " .. (townName or country) .. " " .. remaining .. " -> " .. updated)
             return true
         end
         return false
     end,
 
     displayScoreboard = function()
-        local us = scoreboardValue("USMC", "spawnCount")
-        local x = scoreboardValue("TownX_JP", "spawnCount")
-        local y = scoreboardValue("TownY_JP", "spawnCount")
-        local z = scoreboardValue("TownZ_JP", "spawnCount")
-        commands.exec("/scoreboard players set USMCSpawn Troops_Strength " .. (100 - (tonumber(us) or 0)))
-        commands.exec("/scoreboard players set TownX_JPSpawn Troops_Strength " .. (townQuotas["Town X"] - (tonumber(x) or 0)))
-        commands.exec("/scoreboard players set TownY_JPSpawn Troops_Strength " .. (townQuotas["Town Y"] - (tonumber(y) or 0)))
-        commands.exec("/scoreboard players set TownZ_JPSpawn Troops_Strength " .. (townQuotas["Town Z"] - (tonumber(z) or 0)))
+        -- Troops_Strength is the authoritative remaining-reinforcement counter.
     end,
 
     -- A reinforcement is committed only after a book deployment succeeds.
@@ -196,7 +191,7 @@ respawn = {
     end,
 
     attackerDepleted = function()
-        return not respawn.hasQuota("USMC")
+        return scoreboardValue("USMCSpawn", "Troops_Strength") < 1
     end,
 
     -- JP units retreat from a town to the next when the stage advances.
@@ -204,18 +199,18 @@ respawn = {
         while true do
             if ctx.stage.current == 2 and not retreat.townXRetreated then
                 print("Retreat from X")
-                local xCount = scoreboardValue("TownX_JP", "spawnCount")
-                local remainingX = townQuotas["Town X"] - xCount
-                commands.exec("/scoreboard players set TownX_JP spawnCount " .. townQuotas["Town X"])
-                commands.exec("/scoreboard players remove TownY_JP spawnCount " .. math.floor(remainingX * 0.7))
+                local remainingX = scoreboardValue("TownX_JPSpawn", "Troops_Strength")
+                local remainingY = scoreboardValue("TownY_JPSpawn", "Troops_Strength")
+                setStrength("TownX_JPSpawn", 0)
+                setStrength("TownY_JPSpawn", remainingY + math.floor(remainingX * 0.7))
                 commands.exec("/say JP soldier in town X retreated to town Y")
                 retreat.townXRetreated = true
             elseif ctx.stage.current == 3 and not retreat.townYRetreated then
                 print("Retreat from Y")
-                local yCount = scoreboardValue("TownY_JP", "spawnCount")
-                local remainingY = townQuotas["Town Y"] - yCount
-                commands.exec("/scoreboard players set TownY_JP spawnCount " .. townQuotas["Town Y"])
-                commands.exec("/scoreboard players remove TownZ_JP spawnCount " .. math.floor(remainingY * 0.7))
+                local remainingY = scoreboardValue("TownY_JPSpawn", "Troops_Strength")
+                local remainingZ = scoreboardValue("TownZ_JPSpawn", "Troops_Strength")
+                setStrength("TownY_JPSpawn", 0)
+                setStrength("TownZ_JPSpawn", remainingZ + math.floor(remainingY * 0.7))
                 commands.exec("/say JP soldier in town Y retreated to town Z")
                 retreat.townYRetreated = true
             end

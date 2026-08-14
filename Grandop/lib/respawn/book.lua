@@ -111,7 +111,9 @@ local function spawnBook(area, respawn, faction, team, stage, target)
     local entries = {}
     local list = respawn.infantrySpawns[faction] and respawn.infantrySpawns[faction][stage.current] or {}
     for i, spawn in ipairs(list) do
-        table.insert(entries, { label = spawn.name, command = "/tag @s add grandop_select_spawn_" .. i })
+        if not respawn.canDeploy or respawn.canDeploy(faction, "infantry", spawn.name) then
+            table.insert(entries, { label = spawn.name, command = "/tag @s add grandop_select_spawn_" .. i })
+        end
     end
     if #entries > 0 then
         sendMenu(target or waitingSelector(team, "grandop_wait_spawn"), "Choose " .. faction .. " Spawn", entries)

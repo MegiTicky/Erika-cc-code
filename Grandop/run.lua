@@ -9,7 +9,7 @@
 --   run tickets  <mission>           ticket server
 --   run loadout   [loadout_file]     loadout service
 --   run artillery                    artillery server
---   run gen       [path] [side]      generate a loadout JSON from a chest
+--   run gen       [side]              export chest items for a loadout
 --   run event     <mission> [flags]  complete unified event controller
 
 local args = { ... }
@@ -22,7 +22,7 @@ local function usage()
     print("       run tickets <mission>")
     print("       run loadout [loadout_file]")
     print("       run artillery")
-    print("       run gen [path] [side]")
+    print("       run gen [side]")
     print("       run event <mission> [--validate]")
 end
 
@@ -111,7 +111,7 @@ local function interactive()
         table.insert(entries, { label = "Start artillery server", program = "programs/artillery_server" })
     end
     if fs.exists("/tools/loadout_generator.lua") then
-        table.insert(entries, { label = "Generate loadout from chest", program = "tools/loadout_generator", generator = true })
+        table.insert(entries, { label = "Export chest items for a loadout", program = "tools/loadout_generator", generator = true })
     end
 
     if #entries == 0 then
@@ -137,12 +137,9 @@ local function interactive()
         if not path then print("Invalid loadout selection."); return end
         arguments = { path }
     elseif selected.generator then
-        io.write("Output path (default: data/loadouts/generated.json): ")
-        local output = io.read()
-        arguments = { output == "" and "data/loadouts/generated.json" or output }
         io.write("Inventory side (blank for automatic detection): ")
         local side = io.read()
-        if side ~= "" then table.insert(arguments, side) end
+        if side ~= "" then arguments = { side } end
     end
     launch(selected.program, arguments)
 end
