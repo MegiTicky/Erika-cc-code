@@ -157,6 +157,12 @@ local function candidateSelector(team, scoreName, score, tag, secondScoreName, s
     return "@a[team=" .. team .. ",tag=" .. tag .. ",scores={" .. scores .. "},limit=1]"
 end
 
+local function pendingSelector(team, scoreName, tag, secondScoreName)
+    local scores = scoreName .. "=1.."
+    if secondScoreName then scores = scores .. "," .. secondScoreName .. "=1.." end
+    return "@a[team=" .. team .. ",tag=" .. tag .. ",scores={" .. scores .. "},limit=1]"
+end
+
 local function randomTeleport(target, spawn, radius)
     if spawn.name == "USCommander" then
         commands.exec("/tp " .. target .. " @a[tag=USCom,limit=1]")
@@ -202,6 +208,10 @@ function book.run(ctx)
         commands.exec("/tag " .. target .. " remove grandop_wait_tank_spawn")
     end
 
+    local function enableTrigger(target, objective)
+        commands.exec("/scoreboard players enable " .. target .. " " .. objective)
+    end
+
     -- A restarted controller must not inherit stale session tags from the
     -- previous run for players already standing in a staging room.
     for team in pairs(teams) do
@@ -230,6 +240,7 @@ function book.run(ctx)
                 commands.exec("/scoreboard players set " .. selector .. " " .. tankObjective .. " 0")
                 commands.exec("/scoreboard players set " .. selector .. " " .. tankSpawnObjective .. " 0")
             end
+            enableTrigger(selector, modeObjective)
             commands.exec("/tag " .. selector .. " add grandop_book")
         end
     end
@@ -244,12 +255,14 @@ function book.run(ctx)
             log("Mode selected: " .. faction .. " infantry")
             commands.exec("/tag " .. selector .. " add grandop_wait_class")
             commands.exec("/scoreboard players set " .. selector .. " " .. modeObjective .. " 0")
+            enableTrigger(selector, classObjective)
             commands.exec("/tag " .. selector .. " remove grandop_wait_mode")
             classBook(area, data, faction, team)
         elseif features.tanks then
             log("Mode selected: " .. faction .. " tank")
             commands.exec("/tag " .. selector .. " add grandop_wait_tank")
             commands.exec("/scoreboard players set " .. selector .. " " .. modeObjective .. " 0")
+            enableTrigger(selector, tankObjective)
             commands.exec("/tag " .. selector .. " remove grandop_wait_mode")
             tankBook(area, faction, team, respawn.tanks)
         end
@@ -266,6 +279,7 @@ function book.run(ctx)
         if not commands.exec("execute if entity " .. selector) then return end
         log("Class selected: " .. className)
         commands.exec("/tag " .. selector .. " add grandop_wait_spawn")
+        enableTrigger(selector, spawnObjective)
         commands.exec("/tag " .. selector .. " remove grandop_wait_class")
         spawnBook(area, respawn, faction, team, ctx.stage)
     end
@@ -324,6 +338,7 @@ function book.run(ctx)
         if not tankName or not commands.exec("execute if entity " .. selector) then return end
         log("Tank selected: " .. faction .. " " .. tankName)
         commands.exec("/tag " .. selector .. " add grandop_wait_tank_spawn")
+        enableTrigger(selector, tankSpawnObjective)
         commands.exec("/tag " .. selector .. " remove grandop_wait_tank")
         tankSpawnBook(area, respawn, faction, team)
     end
@@ -375,51 +390,61 @@ function book.run(ctx)
             commands.exec("/scoreboard players set " .. target .. " " .. tankSpawnObjective .. " 0")
             commands.exec("/tag " .. target .. " remove grandop_wait_tank_spawn")
             commands.exec("/tag " .. target .. " add grandop_wait_mode")
+            enableTrigger(target, modeObjective)
             factionBook(target, faction, features.tanks and ctx.radar)
         end
         commands.exec("/tag " .. target .. " remove grandop_processing")
     end
 
-    local function enableTriggers()
-        commands.exec("/scoreboard players enable @a " .. modeObjective)
-        commands.exec("/scoreboard players enable @a " .. classObjective)
-        commands.exec("/scoreboard players enable @a " .. spawnObjective)
-        if features.tanks then
-            commands.exec("/scoreboard players enable @a " .. tankObjective)
-            commands.exec("/scoreboard players enable @a " .. tankSpawnObjective)
-        end
-    end
-
+    local nextCleanup = 0
+    local nextStagingScan = 0
     while true do
-        enableTriggers()
-        for team in pairs(teams) do
-            local faction = factionForTeam(mission, team)
-            local area = stagingArea(respawn, faction, ctx.stage)
-            local outside = area and "@a[team=" .. team .. ",x=" .. area.x .. ",y=" .. area.y .. ",z=" .. area.z .. ",distance=" .. (area.radius + 1) .. "..]"
-            if outside then
-                clearSession(outside)
+        if os.clock() >= nextCleanup then
+            for team in pairs(teams) do
+                local faction = factionForTeam(mission, team)
+                local area = stagingArea(respawn, faction, ctx.stage)
+                local outside = area and "@a[team=" .. team .. ",x=" .. area.x .. ",y=" .. area.y .. ",z=" .. area.z .. ",distance=" .. (area.radius + 1) .. "..]"
+                if outside and commands.exec("execute if entity " .. outside) then
+                    clearSession(outside)
+                end
             end
+            nextCleanup = os.clock() + 1
         end
-        for team in pairs(teams) do initializePlayer(team) end
+        if os.clock() >= nextStagingScan then
+            for team in pairs(teams) do initializePlayer(team) end
+            nextStagingScan = os.clock() + 0.5
+        end
         for team in pairs(teams) do
             processMode(team, 1)
             if features.tanks then processMode(team, 2) end
-            for i = 1, #(factionClasses(data, factionForTeam(mission, team))) do
-                processClass(team, i)
-                for s = 1, #(respawn.infantrySpawns[factionForTeam(mission, team)] and respawn.infantrySpawns[factionForTeam(mission, team)][ctx.stage.current] or {}) do
-                    processSpawn(team, i, s)
+            if commands.exec("execute if entity " .. pendingSelector(team, classObjective, "grandop_wait_class")) then
+                for i = 1, #(factionClasses(data, factionForTeam(mission, team))) do
+                    processClass(team, i)
+                end
+            end
+            if commands.exec("execute if entity " .. pendingSelector(team, spawnObjective, "grandop_wait_spawn", classObjective)) then
+                for i = 1, #(factionClasses(data, factionForTeam(mission, team))) do
+                    for s = 1, #(respawn.infantrySpawns[factionForTeam(mission, team)] and respawn.infantrySpawns[factionForTeam(mission, team)][ctx.stage.current] or {}) do
+                        processSpawn(team, i, s)
+                    end
                 end
             end
             if features.tanks then
-                for i = 1, #tankNamesForFaction(factionForTeam(mission, team)) do
-                    processTank(team, i)
-                    for s = 1, #(respawn.vehicleSpawns[factionForTeam(mission, team)] or {}) do
-                        processTankSpawn(team, i, s)
+                if commands.exec("execute if entity " .. pendingSelector(team, tankObjective, "grandop_wait_tank")) then
+                    for i = 1, #tankNamesForFaction(factionForTeam(mission, team)) do
+                        processTank(team, i)
+                    end
+                end
+                if commands.exec("execute if entity " .. pendingSelector(team, tankSpawnObjective, "grandop_wait_tank_spawn", tankObjective)) then
+                    for i = 1, #tankNamesForFaction(factionForTeam(mission, team)) do
+                        for s = 1, #(respawn.vehicleSpawns[factionForTeam(mission, team)] or {}) do
+                            processTankSpawn(team, i, s)
+                        end
                     end
                 end
             end
         end
-        sleep(0.2)
+        sleep(0.05)
     end
 end
 
