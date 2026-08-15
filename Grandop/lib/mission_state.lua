@@ -1,9 +1,13 @@
--- Versioned, crash-recoverable mission state snapshots.
+-- Versioned, crash-recoverable ComputerCraft state snapshots.
 local state = {}
 
 state.VERSION = 1
 
 local function pathFor(missionId)
+    return "/data/mission_state_" .. missionId:gsub("[^%w_%-]", "_") .. ".state"
+end
+
+local function legacyPathFor(missionId)
     return "/data/mission_state_" .. missionId:gsub("[^%w_%-]", "_") .. ".json"
 end
 
@@ -12,9 +16,15 @@ local function read(path)
     if not file then return nil end
     local content = file.readAll()
     file.close()
-    local ok, value = pcall(textutils.unserialiseJSON, content)
-    if not ok then return nil, tostring(value) end
-    return value
+    local ok, value = pcall(textutils.unserialise, content)
+    if ok and type(value) == "table" then return value end
+
+    -- Earlier snapshots used unquoted keys separated by colons. They are not
+    -- valid JSON or ComputerCraft table syntax, but contain trusted local data.
+    local legacyContent = content:gsub("([%a_][%w_]*)%s*:", "%1=")
+    ok, value = pcall(textutils.unserialise, legacyContent)
+    if ok and type(value) == "table" then return value end
+    return nil, tostring(value)
 end
 
 local function validate(snapshot, missionId)
@@ -40,11 +50,17 @@ function state.load(missionId)
     local path = pathFor(missionId)
     local primaryExists = fs.exists(path)
     local backupPath = path .. ".bak"
-    if not primaryExists and not fs.exists(backupPath) then return nil, "missing" end
+    local legacyPath = legacyPathFor(missionId)
+    if not primaryExists and not fs.exists(backupPath) and not fs.exists(legacyPath) then return nil, "missing" end
     local snapshot, reason = primaryExists and read(path) or nil
     if not snapshot then
         local backup = read(backupPath)
-        if backup then snapshot = backup else return nil, "invalid JSON: " .. tostring(reason) end
+        if backup then
+            snapshot = backup
+        else
+            local legacy = read(legacyPath)
+            if legacy then snapshot = legacy else return nil, "invalid state data: " .. tostring(reason) end
+        end
     end
     local ok
     ok, reason = validate(snapshot, missionId)
@@ -59,26 +75,40 @@ function state.save(missionId, snapshot)
     if not fs.exists("/data") then fs.makeDir("/data") end
     local temp = path .. ".tmp"
     local backup = path .. ".bak"
-    local encoded = textutils.serialiseJSON(snapshot, true)
+    local encoded = textutils.serialise(snapshot)
     local file = fs.open(temp, "w")
     if not file then return false, "could not open temporary state file" end
     file.write(encoded)
     file.close()
-    if fs.exists(backup) then fs.delete(backup) end
-    if fs.exists(path) then fs.move(path, backup) end
+
+    local verified, verifyReason = read(temp)
+    if not verified then
+        fs.delete(temp)
+        return false, "temporary snapshot did not round-trip: " .. tostring(verifyReason)
+    end
+
+    if fs.exists(path) then
+        if fs.exists(backup) then fs.delete(backup) end
+        local movedOld, oldReason = pcall(fs.move, path, backup)
+        if not movedOld then
+            fs.delete(temp)
+            return false, "could not preserve previous snapshot: " .. tostring(oldReason)
+        end
+    end
     local moved, moveReason = pcall(fs.move, temp, path)
     if not moved then
         if fs.exists(backup) then fs.move(backup, path) end
         return false, tostring(moveReason)
     end
-    if fs.exists(backup) then fs.delete(backup) end
     return true
 end
 
 function state.reset(missionId)
-    for _, suffix in ipairs({ "", ".tmp", ".bak" }) do
-        local path = pathFor(missionId) .. suffix
-        if fs.exists(path) then fs.delete(path) end
+    for _, base in ipairs({ pathFor(missionId), legacyPathFor(missionId) }) do
+        for _, suffix in ipairs({ "", ".tmp", ".bak" }) do
+            local path = base .. suffix
+            if fs.exists(path) then fs.delete(path) end
+        end
     end
 end
 

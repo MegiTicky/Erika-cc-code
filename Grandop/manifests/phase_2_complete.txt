@@ -8,6 +8,7 @@ Grandop/lib/loadout.lua|lib/loadout.lua
 Grandop/lib/minecraft.lua|lib/minecraft.lua
 Grandop/lib/monitor_ui.lua|lib/monitor_ui.lua
 Grandop/lib/operator_service.lua|lib/operator_service.lua
+Grandop/lib/onboarding.lua|lib/onboarding.lua
 Grandop/lib/stage_channel.lua|lib/stage_channel.lua
 Grandop/lib/tickets.lua|lib/tickets.lua
 Grandop/lib/objective/staged_capture.lua|lib/objective/staged_capture.lua

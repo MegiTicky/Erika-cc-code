@@ -30,16 +30,16 @@
 
 ## Newcomer Onboarding
 
-- [ ] Detect players who are not assigned to a mission team.
-- [ ] Send newcomers a clear chat prompt explaining how to join a team.
-- [ ] Add secure chat buttons for joining the available teams.
-- [ ] Validate team selection before changing the player's team.
-- [ ] Add the player to the selected Minecraft team.
-- [ ] Teleport the player to that team's current staging-area spawn.
-- [ ] Apply the correct faction and mission-side setup after joining.
-- [ ] Prevent onboarding prompts from repeatedly spamming the same player.
-- [ ] Clear onboarding state when the player joins a team or leaves the server.
-- [ ] Handle stage changes by moving newly joined players to the current staging area.
+- [x] Detect players who are not assigned to a mission team.
+- [x] Send newcomers a clear chat prompt explaining how to join a team.
+- [x] Add secure chat buttons for joining the available teams.
+- [x] Validate team selection before changing the player's team.
+- [x] Add the player to the selected Minecraft team.
+- [x] Teleport the player to that team's current staging-area spawn.
+- [x] Apply the correct faction and mission-side setup after joining.
+- [x] Prevent onboarding prompts from repeatedly spamming the same player.
+- [x] Clear onboarding state when the player joins a team or leaves the server.
+- [x] Handle stage changes by moving newly joined players to the current staging area.
 - [ ] Add an operator option to enable, disable, or reset newcomer onboarding.
 
 ## Artillery Integration

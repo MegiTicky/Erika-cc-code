@@ -96,6 +96,7 @@ local function validateMission()
     if type(features.tanks) ~= "boolean" then features.tanks = false end
     if type(features.creative) ~= "boolean" then features.creative = false end
     if type(features.stageSync) ~= "boolean" then features.stageSync = false end
+    if type(features.onboarding) ~= "boolean" then features.onboarding = false end
     requireTable(respawn.stagingAreas, "respawn.stagingAreas")
     requireTable(respawn.infantrySpawns, "respawn.infantrySpawns")
     for team, faction in pairs(teams) do
@@ -155,6 +156,7 @@ local missionState = grandopRequire("lib.mission_state")
 local stage = grandopRequire("lib.stage_channel")
 local creative = grandopRequire("lib.services.creative_area")
 local book = grandopRequire("lib.respawn.book")
+local onboarding = grandopRequire("lib.onboarding")
 
 local data = loadout.load(respawn.loadout_file)
 if not data then error("Missing loadout file: " .. respawn.loadout_file) end
@@ -287,7 +289,8 @@ function ctx.checkpoint(reason)
     return ok
 end
 
-if not restoring then ctx.checkpoint("initialization") end
+-- Rewrite a recovered legacy snapshot immediately in the verified .state format.
+ctx.checkpoint(restoring and "recovery migration" or "initialization")
 
 local objectiveEngine
 if objective.type == "staged_capture" then
@@ -308,6 +311,14 @@ end
 
 local function bookLoop()
     book.run(ctx)
+end
+
+local function onboardingLoop()
+    if features.onboarding then
+        onboarding.run(ctx)
+    else
+        while true do sleep(1) end
+    end
 end
 
 local function checkpointLoop()
@@ -333,7 +344,7 @@ local function creativeLoop()
     end
 end
 
-local tasks = { objectiveLoop, bookLoop, stageListenerLoop, creativeLoop, checkpointLoop }
+local tasks = { objectiveLoop, bookLoop, onboardingLoop, stageListenerLoop, creativeLoop, checkpointLoop }
 local operatorService = grandopRequire("lib.operator_service")
 table.insert(tasks, function() operatorService.run(ctx, { rednet_side = "right" }) end)
 if respawn.reinforcement and respawn.reinforcement.loop then

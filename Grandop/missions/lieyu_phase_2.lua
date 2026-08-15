@@ -231,6 +231,13 @@ return {
         tanks = true,
         creative = false,
         stageSync = false,
+        onboarding = true,
+    },
+
+    onboarding = {
+        red_team = "Red",
+        blue_team = "Blue",
+        prompt_interval = 1,
     },
 
     objective = {

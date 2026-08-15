@@ -109,14 +109,15 @@ Mission configuration valid: lieyu_phase_2
 
 ### Mission Snapshot Recovery
 
-The unified event controller writes `/data/mission_state_<mission>.json` for
+The unified event controller writes `/data/mission_state_<mission>.state` for
 each running match. The snapshot contains objective progress, stage, tickets,
 reinforcement quotas, vehicle stock, retreat flags, and paused state. It is
 checkpointed after deployments, operator changes, stage changes, and every 15
 seconds. Restarting the controller restores this state automatically.
 
-Writes use a temporary file and retain the previous snapshot as `.bak`. If the
-snapshot is corrupt or does not match its mission ID/schema, startup fails
+Writes use ComputerCraft table serialization, verify the temporary write by
+reading it back, and retain the previous snapshot as `.bak`. If the snapshot
+is corrupt or does not match its mission ID/schema, startup fails
 closed instead of silently overwriting live match progress. Investigate it, or
 perform an intentional reset, before starting the controller again.
 
@@ -159,6 +160,26 @@ The reset initializes these counters:
 | `TownZ_JP spawnCount` | 0 | Japan Town Z deployments consumed |
 
 ## Starting And Stopping
+
+## Newcomer Onboarding
+
+When onboarding is enabled, the event controller checks online players once per
+second. Players who are not on either configured event team receive a chat
+prompt with `Join Red` and `Join Blue` buttons. Players already assigned to Red
+or Blue are ignored.
+
+The buttons submit protected Minecraft `trigger` scoreboard requests. The
+command computer validates the request, assigns the fixed configured team, and
+teleports the player to that team's staging area for the current mission stage.
+The normal respawn book then appears at staging.
+
+Prompts are sent once per online session. Disconnecting clears the in-memory
+prompt state; reconnecting while unassigned produces a new prompt. A player
+joining after a stage change is sent to the current stage's staging area.
+
+The service uses the `g_join_red` and `g_join_blue` trigger objectives. Players
+must use the buttons rather than provide arbitrary team commands; the command
+computer performs the privileged team assignment.
 
 The launcher has an interactive menu. Run this with no arguments when you do
 not want to remember service names or mission IDs:
