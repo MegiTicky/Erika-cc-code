@@ -55,8 +55,8 @@ respawn = {
     -- Players respawn here, receive a book, and choose their deployment.
     -- Stage-specific entries may replace `default` in later missions.
     stagingAreas = {
-        USMC = { default = { x = 4243, y = 308, z = 6653, radius = 10 } },
-        japan = { default = { x = 4237, y = 308, z = 6653, radius = 10 } },
+        USMC = { default = { x = 4607, y = 277, z = 5538, radius = 10 } },
+        japan = { default = { x = 4623, y = 277, z = 5538, radius = 10 } },
     },
     reserve = { x = 1572, y = 90, z = 6280 },
     numPointsX = 3, numPointsZ = 3, spacing = 20,

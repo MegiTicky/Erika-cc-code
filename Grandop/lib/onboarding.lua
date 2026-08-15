@@ -7,8 +7,7 @@ local onboarding = {}
 -- Keep objective names within Minecraft's 16-character limit.
 local RED_OBJECTIVE = "g_join_red"
 local BLUE_OBJECTIVE = "g_join_blue"
-local COOLDOWN_OBJECTIVE = "g_onboard_cd"
-local PROMPT_TAG = "grandop_onboarding_prompted"
+local TEAM_COUNT_OBJECTIVE = "g_team_count"
 local RED_PENDING_TAG = "grandop_join_red_pending"
 local BLUE_PENDING_TAG = "grandop_join_blue_pending"
 
@@ -22,10 +21,30 @@ local function unassignedSelector(redTeam, blueTeam, extra)
     return "@a[" .. filters .. "]"
 end
 
+local function scoreboardValue(player, objective)
+    local ok, output, value = commands.exec("scoreboard players get " .. player .. " " .. objective)
+    if ok and tonumber(value) then return tonumber(value) end
+    for _, line in ipairs(output or {}) do
+        local found = tostring(line):match("has%s+(-?%d+)")
+        if found then return tonumber(found) end
+    end
+    return 0
+end
+
+local function countTeam(team, counter)
+    commands.exec("scoreboard players set " .. counter .. " " .. TEAM_COUNT_OBJECTIVE .. " 0")
+    commands.exec("execute as @a[team=" .. team .. "] run scoreboard players add " .. counter .. " " .. TEAM_COUNT_OBJECTIVE .. " 1")
+    return scoreboardValue(counter, TEAM_COUNT_OBJECTIVE)
+end
+
 local function sendPrompt(target, redTeam, blueTeam)
     -- Team names are validated before this function is called. Keep this
     -- payload literal because some ComputerCraft versions mis-serialize JSON.
-    local message = ('[{"text":"You are not assigned to the current event.\\n","color":"gold","bold":true},{"text":"If you already have a team and are fighting, ignore this message.\\n","color":"gray"},{"text":"[ Join %s ]","color":"red","clickEvent":{"action":"run_command","value":"/trigger %s set 1"}},{"text":"   "},{"text":"[ Join %s ]\\n","color":"blue","clickEvent":{"action":"run_command","value":"/trigger %s set 1"}}]'):format(redTeam, RED_OBJECTIVE, blueTeam, BLUE_OBJECTIVE)
+    local present = commands.exec("execute if entity " .. target)
+    if not present then return false end
+    local redCount = countTeam(redTeam, "onboard_red_count")
+    local blueCount = countTeam(blueTeam, "onboard_blue_count")
+    local message = ('[{"text":"You are not assigned to the current event.\\n","color":"gold","bold":true},{"text":"If you already have a team and are fighting, ignore this message.\\n","color":"gray"},{"text":"Current teams: %s %d | %s %d\\n","color":"yellow"},{"text":"[ Join %s ]","color":"red","clickEvent":{"action":"run_command","value":"/trigger %s set 1"}},{"text":"   "},{"text":"[ Join %s ]\\n","color":"blue","clickEvent":{"action":"run_command","value":"/trigger %s set 1"}}]'):format(redTeam, redCount, blueTeam, blueCount, redTeam, RED_OBJECTIVE, blueTeam, BLUE_OBJECTIVE)
     return commands.exec("tellraw " .. target .. " " .. message)
 end
 
@@ -61,6 +80,7 @@ function onboarding.run(ctx)
         error("Onboarding requires configured teams " .. redTeam .. " and " .. blueTeam)
     end
 
+    local promptInterval = 30
     local loopInterval = math.max(0.25, tonumber(config.loop_interval) or 1)
     local log = ctx.log or print
 
@@ -68,7 +88,8 @@ function onboarding.run(ctx)
     commands.exec("team add " .. blueTeam)
     commands.exec("scoreboard objectives add " .. RED_OBJECTIVE .. " trigger")
     commands.exec("scoreboard objectives add " .. BLUE_OBJECTIVE .. " trigger")
-    commands.exec("scoreboard objectives add " .. COOLDOWN_OBJECTIVE .. " dummy")
+    commands.exec("scoreboard objectives remove g_onboard_cd")
+    commands.exec("scoreboard objectives add " .. TEAM_COUNT_OBJECTIVE .. " dummy")
 
     -- Do not carry an old click or pending request across a controller restart.
     commands.exec("scoreboard players set @a " .. RED_OBJECTIVE .. " 0")
@@ -79,7 +100,6 @@ function onboarding.run(ctx)
     local function initializeScores()
         commands.exec("scoreboard players add @a " .. RED_OBJECTIVE .. " 0")
         commands.exec("scoreboard players add @a " .. BLUE_OBJECTIVE .. " 0")
-        commands.exec("scoreboard players add @a " .. COOLDOWN_OBJECTIVE .. " 0")
         -- A trigger objective must be enabled again after a player uses it.
         enableRequests(unassignedSelector(redTeam, blueTeam))
         -- Never retain a request from before a player joined an event team.
@@ -88,13 +108,8 @@ function onboarding.run(ctx)
     end
 
     local function promptUnassigned()
-        local ready = unassignedSelector(redTeam, blueTeam, "tag=!" .. PROMPT_TAG)
-        if sendPrompt(ready, redTeam, blueTeam) then
-            if commands.exec("tag " .. ready .. " add " .. PROMPT_TAG) then
-                log("Onboarding prompt sent to unassigned players")
-            else
-                log("Onboarding prompt sent, but prompt lock tag could not be added")
-            end
+        if sendPrompt(unassignedSelector(redTeam, blueTeam), redTeam, blueTeam) then
+            log("Onboarding prompt sent to unassigned players")
         end
     end
 
@@ -128,7 +143,6 @@ function onboarding.run(ctx)
         commands.exec("tellraw " .. assigned .. " {\"text\":\"You joined " .. team .. " and were sent to staging.\",\"color\":\"green\"}")
         clearRequests(assigned)
         commands.exec("tag " .. assigned .. " remove " .. pendingTag)
-        commands.exec("tag " .. assigned .. " remove " .. PROMPT_TAG)
         -- Clean requests that failed because the player disconnected or the
         -- server rejected the team operation.
         clearRequests("@a[tag=" .. pendingTag .. "]")
@@ -136,10 +150,14 @@ function onboarding.run(ctx)
         log("Onboarding joined players to " .. team .. " at stage " .. ctx.stage.current)
     end
 
+    local lastPrompt = os.epoch("utc") / 1000 - promptInterval
     while not ctx.operator.shutdown do
         initializeScores()
-        commands.exec("scoreboard players remove " .. unassignedSelector(redTeam, blueTeam, "scores={" .. COOLDOWN_OBJECTIVE .. "=1..}") .. " " .. COOLDOWN_OBJECTIVE .. " 1")
-        promptUnassigned()
+        local now = os.epoch("utc") / 1000
+        if now - lastPrompt >= promptInterval then
+            promptUnassigned()
+            lastPrompt = now
+        end
         processConflicts()
         processTeam(redTeam, RED_OBJECTIVE, RED_PENDING_TAG, BLUE_OBJECTIVE)
         processTeam(blueTeam, BLUE_OBJECTIVE, BLUE_PENDING_TAG, RED_OBJECTIVE)
