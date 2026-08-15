@@ -80,7 +80,7 @@ function service.run(ctx, config)
                 ctx.operator.resetRequested = true
                 ctx.operator.shutdown = true
                 audit(ctx, sender, action, "new match reset requested")
-                reply(sender, requestId, true, "Event stopped; restart once with resetSpawns and resetTanks enabled")
+                reply(sender, requestId, true, "Event stopped; reinforcement scoreboard and stale quota teams will be reset")
             else
                 reply(sender, requestId, false, "Unsupported action")
             end

@@ -3,9 +3,9 @@
 -- Respawn config: USMC vs Japan (town-based quotas) with town retreats.
 
 local townQuotas = {
-    ["Town X"] = 30,
-    ["Town Y"] = 30,
-    ["Town Z"] = 40,
+    ["Town X"] = 6,
+    ["Town Y"] = 6,
+    ["Town Z"] = 8,
 }
 
 local retreat = {
@@ -49,7 +49,7 @@ local respawn
 respawn = {
     loadout_file = "data/loadouts/lieyu_phase_2_new.json",
     tankListFile = "tanksList.txt",
-    -- Keep ROM startup unattended. Change these to true for an explicit reset.
+    -- Keep ROM startup unattended. The operator backend performs explicit resets.
     resetTanks = false,
     resetSpawns = false,
     -- Players respawn here, receive a book, and choose their deployment.
@@ -123,7 +123,7 @@ respawn = {
 
     -- USMC uses one global quota; japan uses per-town quotas.
     quotas = {
-        USMC = { quota = 100, scoreboardPlayer = "USMC" },
+        USMC = { quota = 20, scoreboardPlayer = "USMC" },
     },
     townQuotas = townQuotas,
 
@@ -132,9 +132,20 @@ respawn = {
     end,
 
     initScoreboard = function(reset)
+        if reset then
+            -- Remove the entire reinforcement objective so stale fake players
+            -- from older missions cannot survive a new-match reset.
+            commands.exec("/scoreboard objectives remove Troops_Strength")
+            for _, team in ipairs({
+                "USMCSpawn", "TownX_JPSpawn", "TownY_JPSpawn", "TownZ_JPSpawn",
+                "USReinforcement", "JPSpawn",
+            }) do
+                commands.exec("/team remove " .. team)
+            end
+        end
         commands.exec("/scoreboard objectives add Troops_Strength dummy")
         if reset then
-            setStrength("USMCSpawn", 100)
+            setStrength("USMCSpawn", 20)
             setStrength("TownX_JPSpawn", townQuotas["Town X"])
             setStrength("TownY_JPSpawn", townQuotas["Town Y"])
             setStrength("TownZ_JPSpawn", townQuotas["Town Z"])

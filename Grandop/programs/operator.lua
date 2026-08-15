@@ -40,7 +40,7 @@ while true do
     print("4. Set stage")
     print("5. Set respawn count")
     print("6. Graceful event shutdown")
-    print("7. Stop for new-match reset")
+    print("7. Stop and reset new match")
     print("8. Exit")
     write("Select: ")
     local choice = read()

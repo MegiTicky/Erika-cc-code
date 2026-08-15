@@ -121,18 +121,21 @@ is corrupt or does not match its mission ID/schema, startup fails
 closed instead of silently overwriting live match progress. Investigate it, or
 perform an intentional reset, before starting the controller again.
 
-Use `Stop for new-match reset` on the operator terminal before a fresh match.
-It clears the snapshot, legacy vehicle stock, and configured scoreboards after
-the controller stops. The reset flags below remain available for unattended
-ROM-started deployments.
+Use `Stop and reset new match` on the operator terminal before a fresh match.
+After the controller stops, it clears the snapshot and legacy vehicle stock,
+removes the complete `Troops_Strength` objective (including stale entries such
+as `USReinforcement` and `JPSpawn`), removes old quota teams, and recreates the
+current Phase 2 quota defaults. The reset flags below remain available for
+unattended ROM-started deployments.
 
 The mission deliberately preserves persistent state by default:
 
-- `spawnCount` preserves troop consumption between controller restarts.
+- `Troops_Strength` preserves troop consumption between controller restarts.
 - `tanksList.txt` preserves current tank stock between controller restarts.
 
-For a brand-new match or an intentional full reset, edit
-`missions/lieyu_phase_2.lua` on the event computer and temporarily change:
+For a brand-new match or an intentional full reset without the operator
+backend, edit `missions/lieyu_phase_2.lua` on the event computer and
+temporarily change:
 
 ```lua
 resetTanks = false,
@@ -150,14 +153,14 @@ Start the event once, then stop it with `Ctrl+T`. Change both values back to
 `false` before the normal event start. Leaving either value set to `true` will
 reset the relevant persistent state every time the event starts.
 
-The reset initializes these counters:
+The reset initializes these reinforcement counters:
 
 | Counter | Initial value | Meaning |
 | --- | --- | --- |
-| `USMC spawnCount` | 0 | USMC deployments consumed |
-| `TownX_JP spawnCount` | 0 | Japan Town X deployments consumed |
-| `TownY_JP spawnCount` | 0 | Japan Town Y deployments consumed |
-| `TownZ_JP spawnCount` | 0 | Japan Town Z deployments consumed |
+| `USMCSpawn Troops_Strength` | 20 | Remaining USMC deployments |
+| `TownX_JPSpawn Troops_Strength` | 6 | Remaining Japan Town X deployments |
+| `TownY_JPSpawn Troops_Strength` | 6 | Remaining Japan Town Y deployments |
+| `TownZ_JPSpawn Troops_Strength` | 8 | Remaining Japan Town Z deployments |
 
 ## Starting And Stopping
 
@@ -298,9 +301,9 @@ objective awards the attacker 200 tickets and removes 50 defender tickets.
 
 The sidebar objective is `Troops_Strength`:
 
-- `USMCSpawn` starts at 100 and decreases once for each successful USMC infantry
+- `USMCSpawn` starts at 20 and decreases once for each successful USMC infantry
   or tank deployment.
-- `TownX_JPSpawn`, `TownY_JPSpawn`, and `TownZ_JPSpawn` start at 30, 30, and 40.
+- `TownX_JPSpawn`, `TownY_JPSpawn`, and `TownZ_JPSpawn` start at 6, 6, and 8.
 - The sidebar refreshes immediately after a successful deployment.
 
 The Phase 2 remaining-reinforcement counters are the displayed
@@ -440,7 +443,7 @@ infantry-only.
 
 - Confirm the deployment reached `Infantry spawn selected` or completed tank
   deployment in the event log.
-- Check the matching `spawnCount` scoreboard entry.
+- Check the matching `Troops_Strength` scoreboard entry.
 - Confirm the current event computer has the updated
   `missions/lieyu_phase_2.lua` and `lib/respawn/book.lua` from the event bundle.
 - Restart the event after installing updates.

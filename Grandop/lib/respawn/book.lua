@@ -273,6 +273,7 @@ function book.run(ctx)
         commands.exec("/tag " .. selector .. " add grandop_processing")
         commands.exec("/tag " .. selector .. " remove grandop_select_spawn_" .. spawnIndex)
         local target = processingSelector(team)
+        commands.exec("/gamemode survival " .. target)
         loadout.applyClass(data, className, target)
         randomTeleport(target, spawn, respawn.spawnRadius)
         if respawn.consumeDeployment then respawn.consumeDeployment(faction, "infantry", spawn.name) end
