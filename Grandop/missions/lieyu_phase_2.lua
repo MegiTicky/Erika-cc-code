@@ -237,7 +237,7 @@ return {
     onboarding = {
         red_team = "Red",
         blue_team = "Blue",
-        prompt_interval = 1,
+        loop_interval = 1,
     },
 
     objective = {
