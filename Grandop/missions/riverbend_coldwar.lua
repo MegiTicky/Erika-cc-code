@@ -19,7 +19,8 @@ local function setStrength(player, value)
     commands.exec("/scoreboard players set " .. player .. " Troops_Strength " .. math.max(0, math.floor(value)))
 end
 
-local respawn = {
+local respawn
+respawn = {
     loadout_file = "data/loadouts/riverbend_coldwar.json",
     resetSpawns = false,
     spawnRadius = 10,
