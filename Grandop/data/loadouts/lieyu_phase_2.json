@@ -9,7 +9,6 @@
         { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
         { "item": "combatgear:rations", "count": 32 },
         { "item": "pointblank:type38" },
-        { "item": "combatgear:knife" },
         { "item": "pointblank:ammocreative", "count": 64 },
         { "item": "smallarm:lunge_mine" },
         { "item": "cgm:grenade", "count": 3 }
@@ -24,7 +23,6 @@
         { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
         { "item": "combatgear:rations", "count": 32 },
         { "item": "pointblank:type38" },
-        { "item": "combatgear:knife" },
         { "item": "pointblank:ammocreative", "count": 64 },
         { "item": "trackwork:med_phys_track", "count": 8 },
         { "item": "trackwork:med_suspension_track", "count": 24 },
@@ -47,7 +45,6 @@
         { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
         { "item": "combatgear:rations", "count": 32 },
         { "item": "pointblank:ribeyrolles", "nbt": "{display:{Name:'{\"text\":\"Type 100\",\"italic\":false}'}}" },
-        { "item": "combatgear:knife" },
         { "item": "pointblank:ammocreative", "count": 128 },
         { "item": "smallarm:smoke_grenade", "count": 8 },
         { "item": "combatgear:bandages", "count": 16 },
@@ -80,7 +77,6 @@
         { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
         { "item": "combatgear:rations", "count": 32 },
         { "item": "pointblank:madsen", "nbt": "{display:{Name:'{\"text\":\"Type 97\"}'}}" },
-        { "item": "combatgear:knife" },
         { "item": "pointblank:ammocreative", "count": 256 },
         { "cmd": "/effect give @p minecraft:slowness infinite 2" }
       ]
@@ -94,7 +90,6 @@
         { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
         { "item": "pointblank:tw_m1_garand" },
         { "item": "crusty_chunks:flame_thrower_animated" },
-        { "item": "combatgear:knife" },
         { "item": "combatgear:rations", "count": 8 },
         { "item": "pointblank:ammocreative", "count": 64 },
         { "item": "cgm:grenade", "count": 3 }
@@ -116,7 +111,6 @@
         { "item": "copycats:copycat_layer", "count": 64 },
         { "item": "crusty_chunks:sand_bags", "count": 32 },
         { "item": "minecraft:iron_shovel" },
-        { "item": "combatgear:knife" },
         { "item": "vs_tournament:explosive_instant_small", "count": 3 },
         { "item": "minecraft:tnt", "count": 3 },
         { "item": "minecraft:lever", "count": 32 }
@@ -131,7 +125,6 @@
         { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
         { "item": "pointblank:htg_thompson1928" },
         { "item": "minecraft:snowball", "count": 6, "nbt": "{display:{Name:'{\"text\":\"Heal ball\",\"italic\":false}'},Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
-        { "item": "combatgear:knife" },
         { "item": "combatgear:rations", "count": 32 },
         { "item": "pointblank:ammocreative", "count": 128 },
         { "item": "smallarm:smoke_grenade", "count": 8 },
@@ -147,7 +140,6 @@
         { "slot": "legs", "item": "combatgear:pacific_leggings", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
         { "slot": "feet", "item": "combatgear:pacific_boots", "nbt": "{Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}" },
         { "item": "pointblank:tw_m1_garand" },
-        { "item": "combatgear:knife" },
         { "item": "combatgear:rations", "count": 32 },
         { "item": "pointblank:ammocreative", "count": 128 },
         { "item": "pointblank:m1911a1" },

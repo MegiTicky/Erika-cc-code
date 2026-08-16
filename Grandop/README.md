@@ -265,8 +265,12 @@ The terminal prints the exact log filename when the event starts.
 6. The event applies the loadout, teleports/deploys the player, consumes the
    deployment quota, and updates the sidebar.
 
-The menu uses chat buttons, not written books or `/trigger` objectives. The
-player should click each menu option once and wait for the next menu message.
+The menu uses chat buttons backed by protected `/trigger` objectives. Players do
+not need OP: the event computer enables the valid trigger for the current menu,
+validates the selection, and performs the privileged tag, loadout, teleport, and
+vehicle operations. The trigger objectives are `g_resp_mode`, `g_resp_class`,
+`g_resp_spawn`, `g_resp_tank`, and `g_resp_tspawn`. The player should click each
+menu option once and wait for the next menu message.
 
 ### Infantry Classes
 
