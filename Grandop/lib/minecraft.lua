@@ -32,6 +32,19 @@ function mc.playersInRangeCount(team, x, y, z, range)
     return tonumber(count) or 0
 end
 
+-- Counts only online player entities in a capture zone. Objective diagnostics
+-- use this alongside playersInRangeCount to expose non-player team entities.
+function mc.playerEntitiesInRangeCount(team, x, y, z, range)
+    local ok, _, count = commands.exec(
+        "execute as @a[team=" .. team ..
+        ",x=" .. x .. ",y=" .. y .. ",z=" .. z ..
+        ",distance=.." .. range .. "] at @s run tag @s add grandop_capture_player_scan"
+    )
+    commands.exec("tag @a[tag=grandop_capture_player_scan] remove grandop_capture_player_scan")
+    if not ok then return 0 end
+    return tonumber(count) or 0
+end
+
 -- Extra capture units give diminishing returns: 1 unit is normal speed, then
 -- the square-root curve applies until the configured multiplier cap.
 function mc.captureMultiplier(advantage, maxMultiplier)

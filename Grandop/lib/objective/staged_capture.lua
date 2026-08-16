@@ -45,6 +45,8 @@ function engine.run(mcfg)
     local skipDelay = capture.skipCooldown or 3
     local announceDelay = capture.announceDelay or 2
     local reverseDelay = capture.reverseDelay or 30
+    local allowRedstoneSkip = capture.allowRedstoneSkip ~= false
+    local debugCapture = capture.debug == true
 
     local zones = mcfg.captureZones
     local hub = (mcfg.stage_channel and not mcfg.stageState) and stage.new(mcfg.stage_channel) or nil
@@ -226,6 +228,7 @@ function engine.run(mcfg)
 
     local skipCooldown = 0
     local lastBossbarPlayerRefresh = 0
+    local nextCaptureDebug = 0
 
     -- Main loop
     while not state.ended and not (mcfg.operator and mcfg.operator.shutdown) do
@@ -241,6 +244,24 @@ function engine.run(mcfg)
         local zone = currentZone()
         local attackerCount = mc.playersInRangeCount(mcfg.attackTeam, zone.x, zone.y, zone.z, radius)
         local defenderCount = mc.playersInRangeCount(mcfg.defenseTeam, zone.x, zone.y, zone.z, radius)
+
+        if debugCapture and os.clock() >= nextCaptureDebug then
+            local attackerPlayers = mc.playerEntitiesInRangeCount(mcfg.attackTeam, zone.x, zone.y, zone.z, radius)
+            local defenderPlayers = mc.playerEntitiesInRangeCount(mcfg.defenseTeam, zone.x, zone.y, zone.z, radius)
+            print(("Capture debug: zone=%d score=%s entities %s=%d %s=%d players %s=%d %s=%d"):format(
+                state.zone,
+                tostring(state.score),
+                mcfg.attackTeam,
+                attackerCount,
+                mcfg.defenseTeam,
+                defenderCount,
+                mcfg.attackTeam,
+                attackerPlayers,
+                mcfg.defenseTeam,
+                defenderPlayers
+            ))
+            nextCaptureDebug = os.clock() + 1
+        end
 
         if mode == "bidirectional" then
             local defendersCanDecap = true
@@ -262,10 +283,10 @@ function engine.run(mcfg)
                 end
             end
 
-            if redstone.getInput("front") and os.clock() > skipCooldown then
+            if allowRedstoneSkip and redstone.getInput("front") and os.clock() > skipCooldown then
                 state.score = threshold + 1
                 skipCooldown = os.clock() + skipDelay
-            elseif redstone.getInput("back") and os.clock() > skipCooldown then
+            elseif allowRedstoneSkip and redstone.getInput("back") and os.clock() > skipCooldown then
                 state.score = -threshold - 1
                 skipCooldown = os.clock() + skipDelay
             end
@@ -287,7 +308,7 @@ function engine.run(mcfg)
             end
             if state.score < 0 then state.score = 0 end
 
-            if redstone.getInput("front") and os.clock() > skipCooldown then
+            if allowRedstoneSkip and redstone.getInput("front") and os.clock() > skipCooldown then
                 print("Zone skipped by button press")
                 state.score = threshold + 1
                 skipCooldown = os.clock() + skipDelay

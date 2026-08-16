@@ -375,6 +375,11 @@ if operator.resetRequested then
     end
     if respawn.initScoreboard then respawn.initScoreboard(true) end
     print("Mission state cleared for a new match")
+elseif objective.runtimeState and objective.runtimeState.ended then
+    -- A completed match must not restore its winner or terminal objective
+    -- state when the next match starts.
+    missionState.reset(missionId)
+    print("Mission state cleared after match completion")
 else
     ctx.checkpoint("controller exit")
 end

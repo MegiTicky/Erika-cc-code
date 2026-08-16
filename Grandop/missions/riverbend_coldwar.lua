@@ -139,6 +139,8 @@ return {
             announceDelay = 2,
             reverseDelay = 30,
             skipCooldown = 3,
+            allowRedstoneSkip = false,
+            debug = true,
         },
     },
 
