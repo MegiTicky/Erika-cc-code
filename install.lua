@@ -1,6 +1,6 @@
 -- Download files from the Erika ComputerCraft Code repository.
 -- With no arguments, show the operator installation menu.
--- Usage: install [event lieyu_phase_2] [--force]
+-- Usage: install [event lieyu_phase_2|riverbend_coldwar] [--force]
 --        install <repository path> [destination] [--force]
 --        install bundle <manifest path> [--force]
 
@@ -43,6 +43,10 @@ local PROFILES = {
     lieyu_phase_2 = {
         label = "Lieyu Phase 2 - Complete Event System",
         manifest = "Grandop/manifests/phase_2_complete.txt",
+    },
+    riverbend_coldwar = {
+        label = "Riverbend Cold War - Frontline Event",
+        manifest = "Grandop/manifests/riverbend_event.txt",
     },
 }
 
@@ -168,11 +172,14 @@ end
 local function showMenu()
     print("=== Erika ComputerCraft Installer ===")
     print("1. " .. PROFILES.lieyu_phase_2.label)
-    print("2. Exit")
+    print("2. " .. PROFILES.riverbend_coldwar.label)
+    print("3. Exit")
     io.write("Select an option: ")
     local choice = io.read()
     if choice == "1" then
         return installManifest(PROFILES.lieyu_phase_2.manifest, false, PROFILES.lieyu_phase_2.label)
+    elseif choice == "2" then
+        return installManifest(PROFILES.riverbend_coldwar.manifest, false, PROFILES.riverbend_coldwar.label)
     end
     print("Installation cancelled.")
     return false
@@ -184,11 +191,12 @@ if not sourcePath then
 end
 
 if sourcePath == "event" then
-    if destination ~= "lieyu_phase_2" then
+    local profile = PROFILES[destination]
+    if not profile then
         usage()
         return
     end
-    installManifest(PROFILES.lieyu_phase_2.manifest, force == "--force", PROFILES.lieyu_phase_2.label)
+    installManifest(profile.manifest, force == "--force", profile.label)
     return
 end
 

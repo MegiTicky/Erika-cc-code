@@ -1,0 +1,22 @@
+# Riverbend Cold War unified Frontline event system
+Grandop/run.lua|run
+Grandop/programs/event_controller.lua|programs/event_controller.lua
+Grandop/lib/json.lua|lib/json.lua
+Grandop/lib/mission_state.lua|lib/mission_state.lua
+Grandop/lib/loadout.lua|lib/loadout.lua
+Grandop/lib/minecraft.lua|lib/minecraft.lua
+Grandop/lib/operator_service.lua|lib/operator_service.lua
+Grandop/lib/onboarding.lua|lib/onboarding.lua
+Grandop/lib/stage_channel.lua|lib/stage_channel.lua
+Grandop/lib/tickets.lua|lib/tickets.lua
+Grandop/lib/objective/staged_capture.lua|lib/objective/staged_capture.lua
+Grandop/lib/objective/control_point.lua|lib/objective/control_point.lua
+Grandop/lib/objective/base_assault.lua|lib/objective/base_assault.lua
+Grandop/lib/respawn/book.lua|lib/respawn/book.lua
+Grandop/lib/respawn/vehicles.lua|lib/respawn/vehicles.lua
+Grandop/lib/services/creative_area.lua|lib/services/creative_area.lua
+Grandop/missions/riverbend_coldwar.lua|missions/riverbend_coldwar.lua
+Grandop/data/loadouts/riverbend_coldwar.json|data/loadouts/riverbend_coldwar.json
+Grandop/data/operator_config.lua|data/operator_config.lua
+Grandop/programs/operator.lua|programs/operator.lua
+Grandop/README.md|README_RIVERBEND_COLDWAR.md

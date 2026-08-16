@@ -59,6 +59,16 @@ generator, and operator runbook. The named non-interactive form is:
 install event lieyu_phase_2 --force
 ```
 
+The Riverbend Cold War Frontline event is also available from the installer:
+
+```text
+install event riverbend_coldwar --force
+```
+
+It installs the unified event runtime, Riverbend mission, and NATO/USSR
+loadout. The interactive installer lists it as `Riverbend Cold War - Frontline
+Event`.
+
 The destination defaults to the source filename. Existing files are protected
 from accidental replacement; pass `--force` as the final argument when an
 explicit replacement is intended:
