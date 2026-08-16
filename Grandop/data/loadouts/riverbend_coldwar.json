@@ -1,0 +1,61 @@
+{
+  "classes": {
+    "NATO.rifleman": {
+      "cooldown": 0,
+      "items": [
+        { "item": "tacz:modern_kinetic_gun", "nbt": "{HasBulletInBarrel: 1b, GunCurrentAmmoCount: 7, GunFireMode: \"SEMI\", GunId: \"ww:m1911a1\"}" },
+        { "item": "tacz:modern_kinetic_gun", "nbt": "{HasBulletInBarrel: 1b, GunCurrentAmmoCount: 30, GunFireMode: \"BURST\", GunId: \"tacz:m16a4\"}" },
+        { "item": "minecraft:tnt", "count": 3 },
+        { "item": "combatgear:rations", "count": 5 },
+        { "item": "minecraft:oak_planks", "count": 9 },
+        { "item": "combatgear:m_81w_boots", "nbt": "{Damage: 0}" },
+        { "item": "combatgear:m_81w_chestplate", "nbt": "{Damage: 0}" },
+        { "item": "combatgear:m_81w_helmet", "nbt": "{Damage: 0}" },
+        { "item": "minecraft:chest" },
+        { "item": "combatgear:bandages", "count": 8 },
+        { "item": "cgm:grenade", "count": 5 },
+        { "item": "minecraft:flint_and_steel", "nbt": "{Damage: 0}" },
+        { "item": "smallarm:smoke_grenade", "count": 2 },
+        { "item": "minecraft:iron_shovel", "nbt": "{Damage: 0}" },
+        { "item": "steves_army:soldier_spawn_egg", "count": 10, "nbt": "{EntityTag: {Inventory: {Items: [{Slot: 0, Count: 1b, tag: {Damage: 0}, id: \"combatgear:m_81w_helmet\"}, {Slot: 1, Count: 1b, tag: {Damage: 0}, id: \"combatgear:m_81w_chestplate\"}, {Slot: 2, Count: 1b, tag: {Damage: 0}, id: \"combatgear:m_81w_leggings\"}, {Slot: 3, Count: 1b, tag: {Damage: 0}, id: \"combatgear:m_81w_boots\"}, {Slot: 4, Count: 8b, id: \"combatgear:bandages\"}, {Slot: 5, Count: 1b, tag: {HasBulletInBarrel: 1b, GunCurrentAmmoCount: 30, GunFireMode: \"BURST\", GunId: \"tacz:m16a4\"}, id: \"tacz:modern_kinetic_gun\"}, {Slot: 6, Count: 1b, tag: {HasBulletInBarrel: 1b, GunCurrentAmmoCount: 7, GunFireMode: \"SEMI\", GunId: \"ww:m1911a1\"}, id: \"tacz:modern_kinetic_gun\"}, {Slot: 7, Count: 60b, tag: {AmmoId: \"tacz:556x45\"}, id: \"tacz:ammo\"}, {Slot: 8, Count: 60b, tag: {AmmoId: \"tacz:556x45\"}, id: \"tacz:ammo\"}, {Slot: 9, Count: 60b, tag: {AmmoId: \"tacz:556x45\"}, id: \"tacz:ammo\"}, {Slot: 10, Count: 60b, tag: {AmmoId: \"tacz:556x45\"}, id: \"tacz:ammo\"}, {Slot: 11, Count: 60b, tag: {AmmoId: \"tacz:556x45\"}, id: \"tacz:ammo\"}, {Slot: 12, Count: 60b, tag: {AmmoId: \"tacz:556x45\"}, id: \"tacz:ammo\"}, {Slot: 13, Count: 60b, tag: {AmmoId: \"tacz:556x45\"}, id: \"tacz:ammo\"}, {Slot: 14, Count: 5b, id: \"cgm:grenade\"}, {Slot: 15, Count: 1b, tag: {Damage: 0}, id: \"minecraft:flint_and_steel\"}, {Slot: 16, Count: 2b, id: \"smallarm:smoke_grenade\"}, {Slot: 17, Count: 1b, tag: {Damage: 0}, id: \"minecraft:iron_shovel\"}, {Slot: 18, Count: 60b, tag: {AmmoId: \"tacz:45acp\"}, id: \"tacz:ammo\"}, {Slot: 19, Count: 1b, id: \"steves_army:soldier_spawn_egg\"}, {Slot: 20, Count: 3b, id: \"minecraft:tnt\"}, {Slot: 21, Count: 5b, id: \"combatgear:rations\"}, {Slot: 22, Count: 9b, id: \"minecraft:oak_planks\"}]}}}" },
+        { "item": "combatgear:m_81w_leggings", "nbt": "{Damage: 0}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:45acp\"}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:556x45\"}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:556x45\"}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:556x45\"}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:556x45\"}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:556x45\"}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:556x45\"}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:556x45\"}" }
+      ]
+    },
+    "USSR.rifleman": {
+      "cooldown": 0,
+      "items": [
+        { "item": "tacz:modern_kinetic_gun", "nbt": "{HasBulletInBarrel: 1b, GunCurrentAmmoCount: 30, GunFireMode: \"AUTO\", GunId: \"tacz:ak47\"}" },
+        { "item": "minecraft:tnt", "count": 3 },
+        { "item": "combatgear:rations", "count": 5 },
+        { "item": "minecraft:oak_planks", "count": 9 },
+        { "item": "combatgear:ssh_helmet", "nbt": "{Damage: 0}" },
+        { "item": "combatgear:wwi_chestplate", "nbt": "{Damage: 0}" },
+        { "item": "combatgear:heavycloak_leggings", "nbt": "{Damage: 0}" },
+        { "item": "minecraft:chest" },
+        { "item": "combatgear:bandages", "count": 8 },
+        { "item": "cgm:grenade", "count": 5 },
+        { "item": "minecraft:flint_and_steel", "nbt": "{Damage: 0}" },
+        { "item": "smallarm:smoke_grenade", "count": 2 },
+        { "item": "minecraft:iron_shovel", "nbt": "{Damage: 0}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:762x39\"}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:762x39\"}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:762x39\"}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:762x39\"}" },
+        { "item": "combatgear:emr_boots", "nbt": "{Damage: 0}" },
+        { "item": "steves_army:soldier_spawn_egg", "count": 10, "nbt": "{EntityTag: {Inventory: {Items: [{Slot: 0, Count: 1b, tag: {Damage: 0}, id: \"combatgear:ssh_helmet\"}, {Slot: 1, Count: 1b, tag: {Damage: 0}, id: \"combatgear:wwi_chestplate\"}, {Slot: 2, Count: 1b, tag: {Damage: 0}, id: \"combatgear:heavycloak_leggings\"}, {Slot: 3, Count: 1b, tag: {Damage: 0}, id: \"combatgear:emr_boots\"}, {Slot: 4, Count: 8b, id: \"combatgear:bandages\"}, {Slot: 5, Count: 1b, tag: {HasBulletInBarrel: 1b, GunCurrentAmmoCount: 30, GunFireMode: \"AUTO\", GunId: \"tacz:ak47\"}, id: \"tacz:modern_kinetic_gun\"}, {Slot: 6, Count: 60b, tag: {AmmoId: \"tacz:762x39\"}, id: \"tacz:ammo\"}, {Slot: 7, Count: 60b, tag: {AmmoId: \"tacz:762x39\"}, id: \"tacz:ammo\"}, {Slot: 8, Count: 60b, tag: {AmmoId: \"tacz:762x39\"}, id: \"tacz:ammo\"}, {Slot: 9, Count: 60b, tag: {AmmoId: \"tacz:762x39\"}, id: \"tacz:ammo\"}, {Slot: 10, Count: 60b, tag: {AmmoId: \"tacz:762x39\"}, id: \"tacz:ammo\"}, {Slot: 11, Count: 60b, tag: {AmmoId: \"tacz:762x39\"}, id: \"tacz:ammo\"}, {Slot: 12, Count: 60b, tag: {AmmoId: \"tacz:762x39\"}, id: \"tacz:ammo\"}, {Slot: 13, Count: 60b, tag: {AmmoId: \"tacz:762x39\"}, id: \"tacz:ammo\"}, {Slot: 14, Count: 5b, id: \"cgm:grenade\"}, {Slot: 15, Count: 1b, tag: {Damage: 0}, id: \"minecraft:flint_and_steel\"}, {Slot: 16, Count: 2b, id: \"smallarm:smoke_grenade\"}, {Slot: 17, Count: 5b, id: \"combatgear:rations\"}, {Slot: 18, Count: 3b, id: \"minecraft:tnt\"}, {Slot: 19, Count: 9b, id: \"minecraft:oak_planks\"}, {Slot: 20, Count: 1b, id: \"minecraft:chest\"}, {Slot: 21, Count: 1b, tag: {Damage: 0}, id: \"minecraft:iron_shovel\"}]}}}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:762x39\"}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:762x39\"}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:762x39\"}" },
+        { "item": "tacz:ammo", "count": 60, "nbt": "{AmmoId: \"tacz:762x39\"}" }
+      ]
+    }
+  }
+}
