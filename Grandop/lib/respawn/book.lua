@@ -3,6 +3,7 @@
 -- still performed by the command computer.
 
 local loadout = grandopRequire("lib.loadout")
+local stevesArmy = grandopRequire("lib.steves_army")
 
 local book = {}
 local MODE_TRIGGER = "g_resp_mode"
@@ -398,6 +399,8 @@ function book.run(ctx)
         commands.exec("/gamemode survival " .. target)
         loadout.applyClass(data, className, target)
         randomTeleport(target, spawn, respawn.spawnRadius)
+        local spawned = stevesArmy.spawnSquadmates(target, className, data)
+        if spawned > 0 then log("Spawned " .. spawned .. " squadmates for " .. faction .. " " .. className) end
         if respawn.consumeDeployment then respawn.consumeDeployment(faction, "infantry", spawn.name) end
         if ctx.checkpoint then ctx.checkpoint("infantry deployment") end
         if respawn.displayScoreboard then respawn.displayScoreboard() end

@@ -52,6 +52,7 @@ end
 
 -- Apply one entry to a target. `target` may be a player name or a selector.
 local function applyEntry(target, entry)
+    if entry.give == false then return end
     if type(entry) == "string" then
         commands.exec("/give " .. target .. " " .. entry)
         return

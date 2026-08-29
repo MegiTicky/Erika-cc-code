@@ -402,23 +402,27 @@ armor-slot metadata manually when needed, for example
 After editing the repository copy, commit and push it. Update the event computer
 with the bundle command above, then restart the event.
 
-### Steve's Army Spawn Eggs
+### Steve's Army Squadmates
 
-Steve's Army soldier eggs can be added directly to a class loadout:
+Steve's Army soldier kits live in a class loadout as `steves_army:soldier_spawn_egg`
+entries. Mark each one with `"give": false` and a soldier type:
 
 ```json
-{ "item": "steves_army:soldier_spawn_egg", "count": 1 }
+{ "item": "steves_army:soldier_spawn_egg", "count": 9, "give": false, "soldier": "rifleman", "nbt": "{...}" }
+{ "item": "steves_army:soldier_spawn_egg", "count": 3, "give": false, "soldier": "machine_gunner", "nbt": "{...}" }
 ```
 
-The player must place the egg themselves. This is intentional: the current
-Steve's Army spawn egg assigns the player as owner, assigns the selected fire
-team, and adds the soldier to that player's squad. Do not replace this with a
-plain `/summon steves_army:soldier`; a plain summon bypasses that player-owned
-squad setup.
+The player no longer places eggs. When a player deploys through the book respawn
+service, `lib/steves_army.lua` spawns those squadmates automatically with
+`/stevesarmy spawn <type> <player> ...`, which assigns the player as owner and
+adds each soldier to the player's squad and current fire team. Eggs marked
+`"give": false` are not handed to the player, so no manual placement and no
+double-spawns.
 
-A basic spawn egg creates a default soldier. A pre-equipped NPC requires a
-tested egg `EntityTag` inventory preset from Steve's Army. Test those presets in
-a separate world before adding them to the event loadout.
+The `[loadout]` argument is the egg's `EntityTag.Inventory.Items` list, reused
+verbatim, so the squadmate spawns with the same kit the egg carried. Do not
+replace this with a plain `/summon steves_army:soldier`; a plain summon bypasses
+the player-owned squad setup.
 
 ## Troubleshooting
 
