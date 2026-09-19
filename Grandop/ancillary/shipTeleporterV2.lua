@@ -161,9 +161,7 @@ local defaultCoords = {
         { name = "Main", x = 7094, y = 28, z = 6473 }
     },
     japan = {
-        { name = "S1 Town Spawn", x = 6068, y = 27, z = 5417 },
-        { name = "S2 Hill Top", x = 5401, y = 62, z = 4658 },
-        { name = "S3 West Plane", x = 4747, y = 21, z = 4602 }
+        { name = "Town Z Flats", x = 5007, y = 38, z = 5470 }
     },
     USMC = {
         { name = "Main spawn", x = 4293, y = 23, z = 6700 }

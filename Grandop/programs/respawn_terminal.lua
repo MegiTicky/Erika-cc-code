@@ -40,7 +40,7 @@ local loadout = grandopRequire("lib.loadout")
 local stage = grandopRequire("lib.stage_channel")
 local vehicles = grandopRequire("lib.respawn.vehicles")
 local infantry = grandopRequire("lib.respawn.infantry")
-local squad_refill = grandopRequire("lib.respawn.squad_refill")
+local field_gear = grandopRequire("lib.respawn.field_gear")
 local stevesArmy = grandopRequire("lib.steves_army")
 local creative_area = grandopRequire("lib.services.creative_area")
 
@@ -109,9 +109,11 @@ local v = vehicles.newState(tanksList, {
 })
 vehicles.ensureMarkerObjective()
 
--- Squad refill horn watch: missions opt in by defining respawn.squadRefill.
+-- Field-gear watch (squad refill horn + reset menu book): missions opt in
+-- by defining respawn.squadRefill / respawn.sessionReset.
 local refillCfg = respawnCfg.squadRefill
-if refillCfg then squad_refill.ensureObjective() end
+local resetCfg = respawnCfg.sessionReset
+if refillCfg or resetCfg then field_gear.ensureObjective() end
 
 --================================================================--
 -- Scoreboard init + startup hooks
@@ -190,12 +192,13 @@ local function vehicleLifecycleLoop()
 end
 
 --================================================================--
--- Squad refill upkeep (goat horn watch; missions opt in)
+-- Field-gear upkeep (horn + reset-menu book watch; missions opt in)
 --================================================================--
-local function squadRefillLoop()
+local function fieldGearLoop()
     while true do
-        squad_refill.process({
+        field_gear.process({
             cfg = refillCfg,
+            sessionReset = resetCfg,
             radar = radar,
             teams = mission.teams,
             respawn = respawnCfg,
@@ -370,9 +373,9 @@ local tasks = {
     stage.listener(stageHub),
 }
 
--- Squad refill horn upkeep is opt-in per mission.
-if refillCfg then
-    table.insert(tasks, squadRefillLoop)
+-- Field-gear upkeep is opt-in per mission.
+if refillCfg or resetCfg then
+    table.insert(tasks, fieldGearLoop)
 end
 
 -- Creative staging is optional: only run the zone loop when the mission

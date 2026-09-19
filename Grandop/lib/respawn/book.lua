@@ -4,9 +4,13 @@
 
 local loadout = grandopRequire("lib.loadout")
 local stevesArmy = grandopRequire("lib.steves_army")
-local squadRefill = grandopRequire("lib.respawn.squad_refill")
+local fieldGear = grandopRequire("lib.respawn.field_gear")
 
 local book = {}
+-- Set while book.run is active: hard-resets a player's respawn session by
+-- name (the field-gear poller calls it). A plain name is stable across the
+-- tag/score changes that kill selector-scoped operations.
+book.hardResetPlayer = nil
 local MODE_TRIGGER = "g_resp_mode"
 local CLASS_TRIGGER = "g_resp_class"
 local SPAWN_TRIGGER = "g_resp_spawn"
@@ -77,6 +81,15 @@ end
 
 local function factionForTeam(cfg, team)
     return (cfg.teams and cfg.teams[team]) or (team == "Blue" and "USMC" or "japan")
+end
+
+local function teamForName(teams, name)
+    for team in pairs(teams or {}) do
+        if commands.exec(("execute if entity @a[team=%s,name=%s]"):format(team, name)) then
+            return team
+        end
+    end
+    return nil
 end
 
 local function factionClasses(data, faction)
@@ -361,6 +374,19 @@ function book.run(ctx)
         startModeSession(selector, faction, team)
     end
 
+    -- Field-gear escape hatch: hard-reset a stuck session (missing or frozen
+    -- menu, stale tags — typically after a relog) keyed by player name, so
+    -- the wipe and the fresh menu always land regardless of tag/score state.
+    book.hardResetPlayer = function(name)
+        local team = teamForName(teams, name)
+        if not team then return false end
+        local faction = factionForTeam(mission, team)
+        clearSession(name)
+        local ok = startModeSession(name, faction, team)
+        if ok then log("Hard reset respawn session for " .. name) end
+        return ok
+    end
+
     local function processMode(team, mode)
         local faction = factionForTeam(mission, team)
         local area = stagingArea(respawn, faction, ctx.stage)
@@ -560,10 +586,12 @@ function book.run(ctx)
     local nextCleanup = 0
     local nextStagingScan = 0
     local observedStage = ctx.stage.current
-    -- Squad refill upkeep rides the same 1s maintenance cadence as the
-    -- vehicle marker; missions opt in by defining respawn.squadRefill.
+    -- Field-gear upkeep (squad refill horn + reset menu book) rides the same
+    -- 1s maintenance cadence as the vehicle marker; missions opt in per item
+    -- by defining respawn.squadRefill / respawn.sessionReset.
     local refillCfg = respawn.squadRefill
-    if refillCfg then squadRefill.ensureObjective() end
+    local resetCfg = respawn.sessionReset
+    if refillCfg or resetCfg then fieldGear.ensureObjective() end
     local function hasWaiting(team, tag)
         return commands.exec("execute if entity @a[team=" .. team .. ",tag=" .. tag .. "]")
     end
@@ -579,9 +607,10 @@ function book.run(ctx)
                 vehicles.reconcile(v, ctx.radar, state)
                 vehicles.processMarkers(v, state)
             end
-            if refillCfg then
-                squadRefill.process({
+            if refillCfg or resetCfg then
+                fieldGear.process({
                     cfg = refillCfg,
+                    sessionReset = resetCfg,
                     radar = ctx.radar,
                     teams = mission.teams,
                     respawn = respawn,
@@ -589,6 +618,7 @@ function book.run(ctx)
                     stage = ctx.stage,
                     checkpoint = ctx.checkpoint,
                     log = log,
+                    hardReset = book.hardResetPlayer,
                 })
             end
             commands.exec("/scoreboard players add @a[tag=grandop_book] " .. SESSION_AGE_OBJECTIVE .. " 1")
@@ -606,14 +636,24 @@ function book.run(ctx)
             for team in pairs(teams) do initializePlayer(team) end
             nextStagingScan = os.clock() + 0.5
         end
-        for team in pairs(teams) do
-            local faction = factionForTeam(mission, team)
-            local area = stagingArea(respawn, faction, ctx.stage)
-            local reset = area and selectorForTeam(team, area, "scores={" .. RESET_TRIGGER .. "=1..}")
-            if reset and commands.exec("execute if entity " .. reset) then
-                restartSession(reset, faction, team, "player requested reset")
+            for team in pairs(teams) do
+                local faction = factionForTeam(mission, team)
+                local area = stagingArea(respawn, faction, ctx.stage)
+                local reset = area and selectorForTeam(team, area, "scores={" .. RESET_TRIGGER .. "=1..}")
+                if reset and commands.exec("execute if entity " .. reset) then
+                    -- restartSession zeroes the reset score, which kills a
+                    -- score-scoped selector mid-flight: the tag sweep and the
+                    -- fresh menu would land on nobody and the menu stays
+                    -- frozen. Pin the player with a tag first, then restart
+                    -- by resolved name.
+                    commands.exec("/tag " .. reset .. " add grandop_processing")
+                    local target = resolveProcessingPlayer(team) or reset
+                    restartSession(target, faction, team, "player requested reset")
+                end
             end
-        end
+            -- The reset button must never end up permanently disabled (a
+            -- missed re-enable used to freeze the menu for good).
+            commands.exec("/scoreboard players enable @a[tag=grandop_book] " .. RESET_TRIGGER)
         for team in pairs(teams) do
             processMode(team, 1)
             if features.tanks then processMode(team, 2) end

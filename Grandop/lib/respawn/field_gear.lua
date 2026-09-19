@@ -1,22 +1,43 @@
--- Grandop squad refill.
--- Every teamed field player carries a goat horn ("Squad Refill").
--- Right-clicking it spends one infantry deployment ticket and calls in a
--- standard NPC squad ~50 blocks from the player, in the direction away from
--- the nearest enemy. The detection machinery mirrors the vehicle destruction
--- marker in lib.respawn.vehicles: a per-player scoreboard objective on the
--- item's use criterion, polled about once a second, with the horn re-issued
--- whenever it is lost.
+-- Grandop field gear.
+-- Watches two player-carried items on the same ~1s poll cadence as the
+-- vehicle destruction marker, re-issuing them whenever they are lost:
+--
+--   Squad Refill (goat horn): right-click spends one infantry deployment
+--   ticket and calls in a standard NPC squad ~50 blocks from the player,
+--   in the direction away from the nearest enemy. Detection is a per-player
+--   score on the item's use criterion (gpsquadrefill).
+--
+--   Reset Menu (written book): the page's button runs /trigger g_tagreset,
+--   which hard-resets a stuck respawn session (missing or frozen chat menu,
+--   stale grandop_* tags — typically after a relog) without admin help.
+--
+-- Missions opt in per item by defining respawn.squadRefill and/or
+-- respawn.sessionReset.
 
 local stevesArmy = grandopRequire("lib.steves_army")
 
-local squad_refill = {}
+local field_gear = {}
 
 local REFILL_OBJECTIVE = "gpsquadrefill" -- minecraft.used:minecraft.goat_horn
 local REFILL_DEFAULT_LABEL = "Squad Refill"
 local DEFAULT_DISTANCE = 50 -- blocks between the player and the squad center
 local REFILL_RING_RADIUS = 3
+local RESET_OBJECTIVE = "g_tagreset" -- trigger, set by the book's button
+local RESET_DEFAULT_LABEL = "Reset Menu"
 local SCAN_CACHE_SECONDS = 5
 local COMMANDER_SUFFIX = "Commander$"
+
+-- Fallback session sweep for when the book service is not running (the
+-- standalone terminal): mirrors book.lua's session state.
+local SESSION_TAGS = {
+    "grandop_book", "grandop_resp_red", "grandop_resp_blue",
+    "grandop_wait_mode", "grandop_wait_class", "grandop_wait_spawn",
+    "grandop_wait_tank", "grandop_wait_tank_spawn", "grandop_processing",
+}
+local SESSION_TRIGGERS = {
+    "g_resp_mode", "g_resp_class", "g_resp_spawn",
+    "g_resp_tank", "g_resp_tspawn", "g_resp_reset",
+}
 
 local function refillItemSpec(label)
     -- Byte-identical between give and clear so the NBT filter matches.
@@ -24,31 +45,41 @@ local function refillItemSpec(label)
         :format(label or REFILL_DEFAULT_LABEL)
 end
 
--- Remove every horn copy from an inventory and zero the score, so a stale
--- click can never call a squad for a player who no longer carries the item.
-local function stripRefill(owner, label)
-    commands.exec(("scoreboard players set %s %s 0"):format(owner, REFILL_OBJECTIVE))
-    commands.exec("clear " .. owner .. " " .. refillItemSpec(label))
+local function radioItemSpec(label)
+    -- Byte-identical between give and clear so the NBT filter matches. The
+    -- page button uses the same /trigger mechanism as the chat menus.
+    label = label or RESET_DEFAULT_LABEL
+    local page = '{"text":"' .. label .. '\\n\\nStuck or missing respawn menu? Press the button for a fresh one.\\n\\n","color":"dark_aqua","extra":[{"text":"[ RESET MENU ]","color":"red","bold":true,"clickEvent":{"action":"run_command","value":"/trigger ' .. RESET_OBJECTIVE .. ' set 1"}}]}'
+    return ("minecraft:written_book{title:\"%s\",author:\"GHQ\",display:{Name:'{\"text\":\"%s\",\"color\":\"aqua\",\"italic\":false}'},pages:['%s']}")
+        :format(label, label, page)
 end
 
--- Exactly one horn in the inventory: clear every matching copy (NBT-exact,
--- real goat horns are untouched) then hand out one.
-local function ensureRefillItem(owner, label)
-    stripRefill(owner, label)
-    commands.exec(("give %s %s 1"):format(owner, refillItemSpec(label)))
+-- Remove every copy of an item from an inventory and zero the matching
+-- score, so a stale click can never fire for a player who no longer
+-- carries the item.
+local function stripItem(owner, objective, itemSpec)
+    commands.exec(("scoreboard players set %s %s 0"):format(owner, objective))
+    commands.exec("clear " .. owner .. " " .. itemSpec)
+end
+
+-- Exactly one copy in the inventory: clear every matching copy (NBT-exact,
+-- lookalikes are untouched) then hand out one.
+local function ensureItem(owner, objective, itemSpec)
+    stripItem(owner, objective, itemSpec)
+    commands.exec(("give %s %s 1"):format(owner, itemSpec))
 end
 
 -- Non-destructive presence check. Reuses the give spec's NBT so only OUR
--- horn counts, never a plain goat horn.
-local function hasRefill(owner, label)
-    local nbt = refillItemSpec(label):match("{.*}$")
+-- item counts, never a lookalike.
+local function hasItem(owner, itemId, itemSpec)
+    local nbt = itemSpec:match("{.*}$")
     if not nbt then return false end
-    return commands.exec(("execute if data entity %s Inventory[{id:\"minecraft:goat_horn\",tag:%s}]")
-        :format(owner, nbt)) == true
+    return commands.exec(("execute if data entity %s Inventory[{id:\"%s\",tag:%s}]")
+        :format(owner, itemId, nbt)) == true
 end
 
-local function refillUseCount(owner)
-    local ok, out = commands.exec(("scoreboard players get %s %s"):format(owner, REFILL_OBJECTIVE))
+local function useCount(owner, objective)
+    local ok, out = commands.exec(("scoreboard players get %s %s"):format(owner, objective))
     if not ok or type(out) ~= "table" then return 0 end
     local n = tostring(out[1] or ""):match("has%s+(-?%d+)")
     return tonumber(n) or 0
@@ -149,7 +180,7 @@ local function awayOffsets(players, name, enemyTeam, distance, px, pz)
     return math.floor(-dx / len * distance + 0.5), math.floor(-dz / len * distance + 0.5)
 end
 
-local function handleRefill(rc, cfg, label, faction, name, players)
+local function handleSquadRefill(rc, cfg, label, faction, name, players)
     local respawn = rc.respawn
     local px, pz = scanPos(players, name)
     local spawn = nearestSpawnWithQuota(respawn, faction, rc.stage, px, pz)
@@ -180,19 +211,60 @@ local function handleRefill(rc, cfg, label, faction, name, players)
     end
 end
 
+-- Unconditional: the target scenario is a player whose session state is
+-- broken in a way we cannot classify (missing menu after a relog, stale
+-- tags) — wiping everything is always safe here.
+local function genericHardReset(name)
+    for _, tag in ipairs(SESSION_TAGS) do
+        commands.exec("/tag " .. name .. " remove " .. tag)
+    end
+    for i = 1, 8 do
+        commands.exec("/tag " .. name .. " remove grandop_class_" .. i)
+        commands.exec("/tag " .. name .. " remove grandop_tank_" .. i)
+    end
+    for _, objective in ipairs(SESSION_TRIGGERS) do
+        commands.exec(("scoreboard players set %s %s 0"):format(name, objective))
+        commands.exec(("scoreboard players enable %s %s"):format(name, objective))
+    end
+    commands.exec(("scoreboard players set %s g_resp_age 0"):format(name))
+end
+
+local function processSessionReset(rc, cfg, name)
+    local label = cfg.label or RESET_DEFAULT_LABEL
+    commands.exec(("scoreboard players enable %s %s"):format(name, RESET_OBJECTIVE))
+    if useCount(name, RESET_OBJECTIVE) > 0 then
+        commands.exec(("scoreboard players set %s %s 0"):format(name, RESET_OBJECTIVE))
+        -- Only honor the click while the book is actually carried.
+        if hasItem(name, "minecraft:written_book", radioItemSpec(label)) then
+            if rc.hardReset then
+                rc.hardReset(name)
+            else
+                genericHardReset(name)
+            end
+            commands.exec(("/tellraw %s {\"text\":\"Respawn menu reset\",\"color\":\"green\"}"):format(name))
+        end
+    elseif not hasItem(name, "minecraft:written_book", radioItemSpec(label)) then
+        -- Lost book (death, drop, kit change): strip any stale score and
+        -- hand out a fresh copy, like the horn and the tank marker.
+        ensureItem(name, RESET_OBJECTIVE, radioItemSpec(label))
+    end
+end
+
 -- Per-world and safe to re-add.
-function squad_refill.ensureObjective()
+function field_gear.ensureObjective()
     commands.exec("scoreboard objectives add " .. REFILL_OBJECTIVE
         .. " minecraft.used:minecraft.goat_horn")
+    commands.exec("scoreboard objectives add " .. RESET_OBJECTIVE .. " trigger")
 end
 
 -- One poll tick (same ~1s cadence as the vehicle marker upkeep): re-issue
--- lost horns and turn horn clicks into squad deployments. Missions opt in by
--- defining respawn.squadRefill.
-function squad_refill.process(rc)
+-- lost items and turn item use into squad deployments / session resets.
+-- Missions opt in by defining respawn.squadRefill and/or respawn.sessionReset.
+function field_gear.process(rc)
     if type(rc) ~= "table" or not rc.respawn then return end
-    local cfg = rc.cfg or {}
-    local label = cfg.label or REFILL_DEFAULT_LABEL
+    local refillCfg = rc.cfg
+    local resetCfg = rc.sessionReset
+    if not refillCfg and not resetCfg then return end
     local players = scanPlayers(rc.radar)
     if not players then return end
     for _, p in ipairs(players) do
@@ -200,21 +272,28 @@ function squad_refill.process(rc)
         if name then
             local faction = factionOf(rc.teams, name)
             if faction then
-                if refillUseCount(name) > 0 then
-                    commands.exec(("scoreboard players set %s %s 0"):format(name, REFILL_OBJECTIVE))
-                    -- Only honor clicks while the horn is actually carried: a
-                    -- click logged just before dying must not call a squad.
-                    if hasRefill(name, label) then
-                        handleRefill(rc, cfg, label, faction, name, players)
+                if refillCfg then
+                    local label = refillCfg.label or REFILL_DEFAULT_LABEL
+                    if useCount(name, REFILL_OBJECTIVE) > 0 then
+                        commands.exec(("scoreboard players set %s %s 0"):format(name, REFILL_OBJECTIVE))
+                        -- Only honor clicks while the horn is actually
+                        -- carried: a click logged just before dying must not
+                        -- call a squad.
+                        if hasItem(name, "minecraft:goat_horn", refillItemSpec(label)) then
+                            handleSquadRefill(rc, refillCfg, label, faction, name, players)
+                        end
+                    elseif not hasItem(name, "minecraft:goat_horn", refillItemSpec(label)) then
+                        -- Lost horn (death, drop, kit change): strip any
+                        -- stale score and hand out a fresh copy.
+                        ensureItem(name, REFILL_OBJECTIVE, refillItemSpec(label))
                     end
-                elseif not hasRefill(name, label) then
-                    -- Lost horn (death, drop, kit change): strip any stale
-                    -- score and hand out a fresh copy, like the tank marker.
-                    ensureRefillItem(name, label)
+                end
+                if resetCfg then
+                    processSessionReset(rc, resetCfg, name)
                 end
             end
         end
     end
 end
 
-return squad_refill
+return field_gear

@@ -74,6 +74,11 @@ respawn = {
     -- spawn pool that still has quota.
     squadRefill = { label = "Squad Refill", distance = 50 },
 
+    -- Reset Menu: every teamed player carries a written book whose button
+    -- hard-resets a stuck respawn session (missing or frozen menu, stale
+    -- tags — typically after a relog) without admin help.
+    sessionReset = { label = "Reset Menu" },
+
     -- Battlefield-style vehicle availability: each tank type has a
     -- concurrent-instance cap (maxLive) and a respawn cooldown that starts
     -- at spawn time — while it runs the type cannot spawn at all, and once
@@ -95,9 +100,7 @@ respawn = {
 
     vehicleSpawns = {
         japan = {
-            { name = "S1 Town Spawn", x = 6068, y = 27, z = 5417, useGrid = true },
-            { name = "S2 Hill Top", x = 5401, y = 62, z = 4658, useGrid = true },
-            { name = "S3 West Plane", x = 4747, y = 21, z = 4602, useGrid = true },
+            { name = "Town Z Flats", x = 5007, y = 38, z = 5470, useGrid = true },
         },
         USMC = { { name = "Main tank spawn", x = 4293, y = 23, z = 6700, useGrid = true } },
     },

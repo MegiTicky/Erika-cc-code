@@ -402,21 +402,22 @@ reserve-parked tanks. VMod's ship index is never parsed — recall and
 cleanup address the ships by trying the slug patterns. A player's previous
 vehicle (all its ships) is moved (and frozen) to the `reserve` area.
 
-### Squad Refill
+### Field Items: Squad Refill Horn And Reset Menu Book
 
-Missions opt in by defining `respawn.squadRefill = { label, distance }` (see
-`missions/lieyu_phase_2.lua`; presence enables the feature). Every player on
-a match team permanently carries a renamed goat horn ("Squad Refill") whose
-right-click calls in an NPC squad:
+Two player-carried utility items are watched by the same one-second poller
+that maintains the tank destruction marker (`lib/respawn/field_gear.lua`);
+both are re-issued within a second whenever they are lost (death, drop, kit
+change), and a click logged just before the item left the inventory is
+ignored. Missions opt in per item by defining `respawn.squadRefill` and/or
+`respawn.sessionReset` (see `missions/lieyu_phase_2.lua`).
 
-- Detection mirrors the tank destruction marker: a per-player score on the
-  `gpsquadrefill` objective (`minecraft.used:minecraft.goat_horn` criterion)
-  polled every second by the respawn service (both the chat-book event
-  controller and the standalone terminal). The objective is fully disjoint
-  from the carrot-on-a-stick marker, so the two items never interfere.
-- The horn is re-issued within a second whenever it is lost (death, drop,
-  kit change), exactly like the marker; a click logged before the horn left
-  the inventory is ignored.
+**Squad Refill** — a renamed goat horn whose right-click calls in an NPC
+squad:
+
+- Detection is a per-player score on the `gpsquadrefill` objective
+  (`minecraft.used:minecraft.goat_horn` criterion). The objective is fully
+  disjoint from the carrot-on-a-stick marker, so the two items never
+  interfere.
 - One click spends **one deployment ticket** from the nearest infantry spawn
   pool of the player's faction that still has quota at the current stage
   (commander spawns are skipped) — for USMC the single global pool, for
@@ -429,6 +430,32 @@ right-click calls in an NPC squad:
   scan + scoreboard team check), heightmap-snapped to the surface. With no
   enemy on radar the squad rings the player itself. The ticket is only spent
   once soldiers actually spawned.
+
+**Reset Menu** — a written book whose page carries a `[ RESET MENU ]` button
+running `/trigger g_tagreset set 1` (the same trigger mechanism as the chat
+menus, so it cannot collide with the marker or horn criteria):
+
+- The target scenario is a player in staging whose session is broken — no
+  menu after a **relog** (chat menus die with the session while the
+  `grandop_*` tags persist, so the staging scan skips them forever) or a
+  frozen menu. The reset is **unconditional**: it wipes every `grandop_*`
+  session tag, resets and re-enables all trigger objectives and the session
+  age, and re-sends the mode menu (first page).
+- Works anywhere on the map; a deployed player who uses it just gets a
+  transient menu that the existing outside-staging cleanup removes next
+  tick. In the book flow the reset runs through the book service; the
+  standalone terminal uses an equivalent generic sweep.
+
+### The respawn menu reset button
+
+The `[ Reset menu ]` button on every book page zeroes and re-enables its
+trigger, clears all session tags and re-sends the first page. The reset
+processing pins the player with a tag and restarts the session by resolved
+player name — restarting on the raw score-scoped selector used to kill the
+selector mid-flight (score zeroed → selector matches nobody), which froze
+the menu and permanently disabled the button. The service also re-enables
+the reset trigger for all book holders every second, so the button can
+never end up dead again.
 
 ## Tickets And Troop Strength
 
