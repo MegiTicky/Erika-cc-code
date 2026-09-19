@@ -134,10 +134,16 @@ function infantry.respawn(ctx, spawnLocation, className)
         local x = math.floor(spawnLocation.x + dx + 0.5)
         local z = math.floor(spawnLocation.z + dz + 0.5)
 
-        -- Snap to the terrain surface via the heightmap: the mission's fixed
-        -- spawn y can sit inside a hill or a ditch across the scatter radius.
-        commands.exec(("execute positioned %d %d %d positioned over motion_blocking run tp %s ~ ~ ~")
-            :format(x, spawnLocation.y, z, player))
+        -- The tp works in (and loads) unloaded chunks; the heightmap read
+        -- behind `positioned over` does not — it refuses positions nobody
+        -- occupies. Land at the mission's calibrated Y first, then snap to
+        -- the terrain surface at the player's now-loaded position. If the
+        -- snap still fails the calibrated Y is the fallback landing.
+        commands.exec(("/tp %s %d %d %d"):format(player, x, spawnLocation.y, z))
+        if not commands.exec(("execute at %s positioned over motion_blocking run tp %s ~ ~ ~")
+            :format(player, player)) then
+            print("Surface snap failed for " .. player)
+        end
         commands.exec(("title %s actionbar {\"text\":\"Respawned as %s at %s (Stage %d)\",\"color\":\"yellow\"}"):format(player, className, spawnLocation.name, ctx.stage.current))
         commands.exec("/effect give " .. player .. " minecraft:resistance 4 10")
         print(("%s respawned near %s at (%d, %d)"):format(player, spawnLocation.name, x, z))

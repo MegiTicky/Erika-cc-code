@@ -203,10 +203,16 @@ local function randomTeleport(target, spawn, radius)
         local dz = math.random(-radius, radius)
         local x = math.floor(spawn.x + dx + 0.5)
         local z = math.floor(spawn.z + dz + 0.5)
-        -- Snap to the terrain surface via the heightmap: the mission's fixed
-        -- spawn.y can sit inside a hill or a ditch across the scatter radius.
-        commands.exec(("execute positioned %d %d %d positioned over motion_blocking run tp %s ~ ~ ~")
-            :format(x, spawn.y, z, target))
+        -- The tp works in (and loads) unloaded chunks; the heightmap read
+        -- behind `positioned over` does not — it refuses positions nobody
+        -- occupies. Land at the mission's calibrated Y first, then snap to
+        -- the terrain surface at the player's now-loaded position. If the
+        -- snap still fails the calibrated Y is the fallback landing.
+        commands.exec(("/tp %s %d %d %d"):format(target, x, spawn.y, z))
+        if not commands.exec(("execute at %s positioned over motion_blocking run tp %s ~ ~ ~")
+            :format(target, target)) then
+            print("Surface snap failed for " .. target)
+        end
     end
 end
 
