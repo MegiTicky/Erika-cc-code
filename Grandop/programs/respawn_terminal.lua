@@ -40,6 +40,7 @@ local loadout = grandopRequire("lib.loadout")
 local stage = grandopRequire("lib.stage_channel")
 local vehicles = grandopRequire("lib.respawn.vehicles")
 local infantry = grandopRequire("lib.respawn.infantry")
+local stevesArmy = grandopRequire("lib.steves_army")
 local creative_area = grandopRequire("lib.services.creative_area")
 
 monitor.clear()
@@ -59,15 +60,21 @@ local stageHub = stage.new(stageChannel)
 stage.open(stageHub)
 
 --================================================================--
+-- Tank pool source (flat `tanks` table or `vehiclePools.initial`)
+--================================================================--
+local poolSource = respawnCfg.tanks or (respawnCfg.vehiclePools and respawnCfg.vehiclePools.initial) or nil
+if not poolSource then error("Mission has no tank pools: " .. missionId) end
+
+--================================================================--
 -- Country selection (override via arg or prompt on the terminal)
 --================================================================--
 local country = nil
 if args[2] then
     country = args[2]
-    if not respawnCfg.tanks[country] then error("Unknown country: " .. country) end
+    if not poolSource[country] then error("Unknown country: " .. country) end
 else
     local countries = {}
-    for c in pairs(respawnCfg.tanks) do table.insert(countries, c) end
+    for c in pairs(poolSource) do table.insert(countries, c) end
     table.sort(countries)
     print("Select your country:")
     for i, c in ipairs(countries) do print(i .. ". " .. c) end
@@ -81,12 +88,7 @@ print("You selected " .. country)
 --================================================================--
 -- Reset prompts (configurable for headless ROM operation)
 --================================================================--
-local resetTanks = respawnCfg.resetTanks or false
 local resetSpawns = respawnCfg.resetSpawns or false
-if respawnCfg.resetTanks == nil then
-    print("Reset the tank list and overwrite the file? (y/n): ")
-    resetTanks = io.read():lower() == "y"
-end
 if respawnCfg.resetSpawns == nil then
     print("Reset the infantry spawn count scoreboard? (y/n): ")
     resetSpawns = io.read():lower() == "y"
@@ -95,10 +97,16 @@ end
 --================================================================--
 -- Vehicle state + tank list
 --================================================================--
-local tankListFile = respawnCfg.tankListFile or "tanksList.txt"
-if resetTanks then vehicles.saveTankList(tankListFile, respawnCfg.tanks) end
-local tanksList = vehicles.loadTankList(tankListFile, respawnCfg.tanks)
-local v = vehicles.newState(tanksList)
+-- Tank availability lives in memory (per-type maxLive/cooldown); every
+-- terminal start begins with a fresh state.
+local tanksList = vehicles.mergePoolConfig(poolSource, nil)
+local v = vehicles.newState(tanksList, {
+    abandonRadius = respawnCfg.abandonRadius,
+    abandonSeconds = respawnCfg.abandonSeconds,
+    reserve = respawnCfg.reserve,
+    markerLabel = respawnCfg.markerLabel,
+})
+vehicles.ensureMarkerObjective()
 
 --================================================================--
 -- Scoreboard init + startup hooks
@@ -166,6 +174,17 @@ local function closestPlayerLoop()
 end
 
 --================================================================--
+-- Background vehicle lifecycle (destruction/abandonment + marker watch)
+--================================================================--
+local function vehicleLifecycleLoop()
+    while true do
+        vehicles.reconcile(v, radar, runtime)
+        vehicles.processMarkers(v, runtime)
+        sleep(1)
+    end
+end
+
+--================================================================--
 -- Mode selection (Tank / Infantry)
 --================================================================--
 local function selectMode()
@@ -198,12 +217,13 @@ local function tankFlow()
     monitor.setCursorPos(1, 1)
     monitor_ui.print(monitor, "=== Available Tanks ===")
 
+    vehicles.reconcile(v, radar, runtime)
+
     local availableTanks = {}
-    for tankName, cfg in pairs(tanksList[country]) do
-        if cfg.stock and cfg.stock > 0 then
-            table.insert(availableTanks, tankName)
-        end
+    for tankName in pairs(tanksList[country] or {}) do
+        table.insert(availableTanks, tankName)
     end
+    table.sort(availableTanks)
 
     if #availableTanks == 0 then
         monitor_ui.print(monitor, "No tanks available!")
@@ -212,43 +232,50 @@ local function tankFlow()
     end
 
     for _, name in ipairs(availableTanks) do
-        local cfg = tanksList[country][name]
-        vehicles.ensure(v, country, name)
-        vehicles.refill(v, country, name)
-        local cd = vehicles.timeToNext(v, country, name)
-        local st = v.state[country][name]
-        local cdText = (st.tokens > 0) and "Ready" or (tostring(cd) .. "s")
-        monitor_ui.print(monitor, ("- %s (%d)  cooldown:%s"):format(name, cfg.stock, cdText))
+        local ok, info = vehicles.available(v, country, name)
+        monitor_ui.print(monitor, ("- %s  %s"):format(name, tostring(info)))
     end
 
     local selectedTank = vehicles.selectTankTouch(monitor, availableTanks, v, country)
     if not selectedTank then return end
 
-    local ok, waitSec = vehicles.tryConsume(v, country, selectedTank)
+    local ok, info = vehicles.available(v, country, selectedTank)
     if not ok then
-        monitor_ui.print(monitor, selectedTank .. " cooldown. Ready in ~" .. waitSec .. "s.")
+        monitor_ui.print(monitor, selectedTank .. " unavailable: " .. tostring(info))
         sleep(1.2)
         return
     end
 
-    local spawnPoint = vehicles.selectSpawnPoint(monitor, respawnCfg.coords[country])
+    local spawnPoint = vehicles.selectSpawnPoint(monitor,
+        respawnCfg.coords and respawnCfg.coords[country]
+        or (respawnCfg.vehicleSpawns and respawnCfg.vehicleSpawns[country])
+        or {})
     if not spawnPoint then return end
 
     local repairKits = loadoutData.repair_kits or {}
+    local player = currentPlayer()
     vehicles.spawnTank({
         v = v,
         country = country,
         monitor = monitor,
         radar = radar,
-        player = currentPlayer(),
+        player = player,
         mission = respawnCfg,
         spawnPoint = spawnPoint,
         tankName = selectedTank,
         playerTankMap = runtime.playerTankMap,
         tankslugtoID = runtime.tankslugtoID,
         repairKits = repairKits,
-        tankListFile = tankListFile,
     })
+
+    -- Tanker kit follows the infantry classes: armor worn directly, sidearm
+    -- in inventory, plus a full rifle squad (9 rifle / 3 MG / 2 AT) on a wide
+    -- 20-block ring so soldiers don't spawn on the vehicle deck.
+    local tankClass = country .. ".tank"
+    if loadout.getClass(loadoutData, tankClass) then
+        loadout.applyClass(loadoutData, tankClass, player)
+        stevesArmy.spawnSquadmates(player, tankClass, loadoutData, 20)
+    end
 end
 
 --================================================================--
@@ -317,9 +344,18 @@ end
 local tasks = {
     mainLoop,
     closestPlayerLoop,
-    function() creative_area.run(radar, respawnCfg.creativeZones(country), respawnCfg.creativeRadius) end,
+    vehicleLifecycleLoop,
     stage.listener(stageHub),
 }
+
+-- Creative staging is optional: only run the zone loop when the mission
+-- actually defines creative zones.
+local creativeZones = respawnCfg.creativeZones and respawnCfg.creativeZones(country) or nil
+if creativeZones and #creativeZones > 0 then
+    table.insert(tasks, function()
+        creative_area.run(radar, creativeZones, respawnCfg.creativeRadius)
+    end)
+end
 
 if respawnCfg.reinforcement and respawnCfg.reinforcement.loop then
     table.insert(tasks, function() respawnCfg.reinforcement.loop(ctx) end)

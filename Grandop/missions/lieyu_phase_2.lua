@@ -48,7 +48,6 @@ end
 local respawn
 respawn = {
     loadout_file = "data/loadouts/lieyu_phase_2_new.json",
-    tankListFile = "tanksList.txt",
     -- Keep ROM startup unattended. The operator backend performs explicit resets.
     resetTanks = false,
     resetSpawns = false,
@@ -61,19 +60,28 @@ respawn = {
     reserve = { x = 1572, y = 90, z = 6280 },
     numPointsX = 3, numPointsZ = 3, spacing = 20,
     spawnRadius = 50,
-    creativeRadius = 50,
+    -- Tank abandonment: an active tank with no player within abandonRadius
+    -- blocks is warned to its owner and, after abandonSeconds, recalled to
+    -- the reserve depot. The owner also carries a destruction marker item
+    -- (markerLabel) whose right-click recalls the tank instantly.
+    abandonRadius = 20,
+    abandonSeconds = 30,
+    markerLabel = "Tank Destruction Marker",
 
-    -- Breakthrough pools are additive. Phase 2 makes every listed vehicle
-    -- available at stage 1 and adds none at later stages.
+    -- Battlefield-style vehicle availability: each tank type has a
+    -- concurrent-instance cap (maxLive) and a respawn cooldown that starts
+    -- at spawn time — while it runs the type cannot spawn at all, and once
+    -- it has expired the next destruction frees the slot for an immediate
+    -- respawn. Tanks spawn directly from server schematics (/vmod schem),
+    -- so there is no finite stock.
     vehiclePools = {
         policy = "add",
         initial = {
             japan = {
-                chinu = { stock = 2, cooldown = 180, buffer = 1 },
-                horo  = { stock = 1, cooldown = 180, buffer = 1 },
+                chinu = { maxLive = 1, cooldown = 180 },
             },
             USMC = {
-                sherman75usmc = { stock = 3, cooldown = 180, buffer = 1 },
+                sherman75usmc = { maxLive = 1, cooldown = 180 },
             },
         },
         additions = {},
@@ -127,8 +135,10 @@ respawn = {
     },
     townQuotas = townQuotas,
 
+    -- No creative staging: tankers deploy in survival next to the freshly
+    -- placed schematic, so the zone loop stays disabled (empty list).
     creativeZones = function(country)
-        return respawn.vehicleSpawns[country] or {}
+        return {}
     end,
 
     initScoreboard = function(reset)
@@ -188,7 +198,8 @@ respawn = {
     end,
 
     -- A reinforcement is committed only after a book deployment succeeds.
-    -- Japan's town quota applies to infantry choices; tank stock is separate.
+    -- Japan's town quota applies to infantry choices; tank availability is
+    -- governed by maxLive/cooldown in vehiclePools, not by quotas.
     canDeploy = function(country, kind, spawnName)
         if country == "USMC" then return respawn.hasQuota(country) end
         if kind == "infantry" then return respawn.hasQuota(country, spawnName) end

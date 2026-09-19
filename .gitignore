@@ -16,3 +16,8 @@ Thumbs.db
 
 # Downloaded website assets
 LeibaoAutolockCodex/CCVS API wiki/*_files/
+
+# Local agent tooling and backups
+.zcode/
+.video_agent/
+Grandop_bak/

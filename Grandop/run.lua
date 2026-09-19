@@ -10,6 +10,7 @@
 --   run loadout   [loadout_file]     loadout service
 --   run artillery                    artillery server
 --   run operator                     dedicated operator terminal
+--   run schemtest [schematic] [x y z] standalone VMod schematic spawn test
 --   run gen       [side]              export chest items for a loadout
 --   run event     <mission> [flags]  complete unified event controller
 
@@ -24,6 +25,7 @@ local function usage()
     print("       run loadout [loadout_file]")
     print("       run artillery")
     print("       run operator")
+    print("       run schemtest [schematic] [x y z]")
     print("       run gen [side]")
     print("       run event <mission> [--validate]")
 end
@@ -115,6 +117,9 @@ local function interactive()
     if fs.exists("/programs/operator.lua") then
         table.insert(entries, { label = "Open operator terminal", program = "programs/operator" })
     end
+    if fs.exists("/programs/test_schematic_spawn.lua") then
+        table.insert(entries, { label = "Test schematic spawn", program = "programs/test_schematic_spawn", schematic = true })
+    end
     if fs.exists("/tools/loadout_generator.lua") then
         table.insert(entries, { label = "Export chest items for a loadout", program = "tools/loadout_generator", generator = true })
     end
@@ -141,6 +146,10 @@ local function interactive()
         local path = chooseLoadout()
         if not path then print("Invalid loadout selection."); return end
         arguments = { path }
+    elseif selected.schematic then
+        io.write("Schematic name (blank for chinu): ")
+        local name = io.read()
+        if name ~= "" then table.insert(arguments, name) end
     elseif selected.generator then
         io.write("Inventory side (blank for automatic detection): ")
         local side = io.read()
@@ -161,6 +170,7 @@ local programs = {
     loadout = "programs/loadout_service",
     artillery = "programs/artillery_server",
     operator = "programs/operator",
+    schemtest = "programs/test_schematic_spawn",
     gen = "tools/loadout_generator",
     event = "programs/event_controller",
 }

@@ -133,12 +133,14 @@ function infantry.respawn(ctx, spawnLocation, className)
         local dz = math.random(-ctx.spawnRadius, ctx.spawnRadius)
         local x = math.floor(spawnLocation.x + dx + 0.5)
         local z = math.floor(spawnLocation.z + dz + 0.5)
-        local y = spawnLocation.y
 
-        commands.exec(("tp %s %d %d %d"):format(player, x, y, z))
+        -- Snap to the terrain surface via the heightmap: the mission's fixed
+        -- spawn y can sit inside a hill or a ditch across the scatter radius.
+        commands.exec(("execute positioned %d %d %d positioned over motion_blocking run tp %s ~ ~ ~")
+            :format(x, spawnLocation.y, z, player))
         commands.exec(("title %s actionbar {\"text\":\"Respawned as %s at %s (Stage %d)\",\"color\":\"yellow\"}"):format(player, className, spawnLocation.name, ctx.stage.current))
         commands.exec("/effect give " .. player .. " minecraft:resistance 4 10")
-        print(("%s respawned near %s at (%d, %d, %d)"):format(player, spawnLocation.name, x, y, z))
+        print(("%s respawned near %s at (%d, %d)"):format(player, spawnLocation.name, x, z))
     end
 end
 

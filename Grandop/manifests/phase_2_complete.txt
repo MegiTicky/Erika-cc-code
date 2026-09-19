@@ -5,6 +5,7 @@ Grandop/lib/json.lua|lib/json.lua
 Grandop/lib/mission_state.lua|lib/mission_state.lua
 Grandop/lib/bootstrap.lua|lib/bootstrap.lua
 Grandop/lib/loadout.lua|lib/loadout.lua
+Grandop/lib/steves_army.lua|lib/steves_army.lua
 Grandop/lib/minecraft.lua|lib/minecraft.lua
 Grandop/lib/monitor_ui.lua|lib/monitor_ui.lua
 Grandop/lib/operator_service.lua|lib/operator_service.lua

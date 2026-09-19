@@ -50,26 +50,16 @@ local PROFILES = {
     },
 }
 
-local function download(source, target, overwrite)
-    if fs.exists(target) and not overwrite then
-        printError("Refusing to overwrite existing file: " .. target)
-        print("Use --force to replace it.")
-        return false
-    end
+local function buildUrl(source)
+    return "https://raw.githubusercontent.com/" .. REPOSITORY .. "/" .. BRANCH .. "/" .. encodePath(source)
+end
 
-    local url = "https://raw.githubusercontent.com/" .. REPOSITORY .. "/" .. BRANCH .. "/" .. encodePath(source)
-    print("Downloading " .. source .. "...")
-
-    local response, reason = http.get(url)
-    if not response then
-        printError("Download failed: " .. tostring(reason))
-        return false
-    end
-
+-- Write a completed HTTP response to `target`. Returns false on failure.
+local function writeResponse(response, source, target)
     local status = response.getResponseCode and response.getResponseCode() or 200
     if status ~= 200 then
         response.close()
-        printError("Download failed with HTTP status " .. tostring(status))
+        printError("Download failed with HTTP status " .. tostring(status) .. ": " .. source)
         return false
     end
 
@@ -91,6 +81,25 @@ local function download(source, target, overwrite)
     file.close()
     print("Installed " .. target)
     return true
+end
+
+local function download(source, target, overwrite)
+    if fs.exists(target) and not overwrite then
+        printError("Refusing to overwrite existing file: " .. target)
+        print("Use --force to replace it.")
+        return false
+    end
+
+    local url = buildUrl(source)
+    print("Downloading " .. source .. "...")
+
+    local response, reason = http.get(url)
+    if not response then
+        printError("Download failed: " .. tostring(reason))
+        return false
+    end
+
+    return writeResponse(response, source, target)
 end
 
 local function fetch(url, failureLabel)
@@ -135,12 +144,61 @@ local function readManifest(manifestPath)
     return entries
 end
 
+local MAX_PARALLEL = 4
+
+local function countPending(pending)
+    local count = 0
+    for _ in pairs(pending) do count = count + 1 end
+    return count
+end
+
 local function installEntries(entries, overwrite)
-    local installed = 0
     for _, entry in ipairs(entries) do
-        if not download(entry.source, entry.target, overwrite) then return false end
-        installed = installed + 1
+        if fs.exists(entry.target) and not overwrite then
+            printError("Refusing to overwrite existing file: " .. entry.target)
+            print("Use --force to replace it.")
+            return false
+        end
     end
+
+    local pending = {}
+    local index = 1
+    local installed = 0
+    local total = #entries
+
+    local function startOne(entry)
+        local url = buildUrl(entry.source)
+        print("Downloading " .. entry.source .. "...")
+        -- Non-blocking; completion arrives as http_success / http_failure.
+        http.request(url)
+        pending[url] = entry
+    end
+
+    local function fill()
+        while index <= total and countPending(pending) < MAX_PARALLEL do
+            startOne(entries[index])
+            index = index + 1
+        end
+    end
+
+    fill()
+
+    while countPending(pending) > 0 do
+        local event, url, param = os.pullEvent("http_success", "http_failure")
+        local entry = pending[url]
+        if entry then
+            pending[url] = nil
+            if event == "http_success" then
+                if not writeResponse(param, entry.source, entry.target) then return false end
+                installed = installed + 1
+            else
+                printError("Download failed: " .. entry.source .. " (" .. tostring(param) .. ")")
+                return false
+            end
+            fill()
+        end
+    end
+
     print("Installed " .. installed .. " files")
     return true
 end

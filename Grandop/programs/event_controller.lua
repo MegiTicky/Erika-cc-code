@@ -134,6 +134,11 @@ local function validateMission()
             if type(respawn.vehicleSpawns[faction]) ~= "table" then
                 error("Configuration error: missing vehicle spawns for " .. faction)
             end
+            for tankName, cfg in pairs(respawn.vehiclePools.initial[faction]) do
+                if type(cfg) ~= "table" then
+                    error("Configuration error: vehicle pool entry " .. faction .. "." .. tankName .. " must be a table")
+                end
+            end
         end
     end
 end
@@ -186,13 +191,14 @@ local restoring = savedState ~= nil
 
 if features.tanks then
     local vehicles = grandopRequire("lib.respawn.vehicles")
-    local tankListFile = respawn.tankListFile or "tanksList.txt"
     if respawn.resetTanks then
         restoring = false
         savedState = nil
-        vehicles.saveTankList(tankListFile, respawn.vehiclePools.initial)
     end
-    respawn.tanks = (savedState and savedState.vehicles) or vehicles.loadTankList(tankListFile, respawn.vehiclePools.initial)
+    -- Mission defaults form the base; recovered runtime state (active tanks,
+    -- cooldowns, name counters, admin maxLive tweaks) is overlaid on top. New
+    -- tanks added to the mission show up without wiping runtime data.
+    respawn.tanks = vehicles.mergePoolConfig(respawn.vehiclePools.initial, savedState and savedState.vehicles or nil)
     respawn.resetTanks = false
 end
 

@@ -1,5 +1,121 @@
 {
   "classes": {
+    "japan.tank": {
+      "cooldown": 0,
+      "items": [
+        {
+          "slot": "head",
+          "item": "combatgear:tankcap_helmet",
+          "nbt": "{Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}"
+        },
+        {
+          "slot": "chest",
+          "item": "combatgear:wwi_chestplate",
+          "nbt": "{Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}"
+        },
+        {
+          "slot": "legs",
+          "item": "combatgear:drab_leggings",
+          "nbt": "{Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}"
+        },
+        {
+          "slot": "feet",
+          "item": "combatgear:pacific_boots",
+          "nbt": "{Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}"
+        },
+        {
+          "item": "pointblank:m1911a1",
+          "count": 1
+        },
+        {
+          "item": "pointblank:ammocreative",
+          "count": 64
+        },
+        {
+          "item": "combatgear:pillsui",
+          "count": 1
+        },
+        {
+          "item": "steves_army:soldier_spawn_egg",
+          "count": 9,
+          "nbt": "{RepairCost: 0, display: {Name: '{\"text\":\"Japan-assault-rifle\"}'}, EntityTag: {Inventory: {Items: [{Slot: 0, id: \"combatgear:pacific_helmet\", tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, Count: 1b}, {Slot: 1, id: \"combatgear:wwi_chestplate\", tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, Count: 1b}, {Slot: 2, id: \"combatgear:drab_leggings\", tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, Count: 1b}, {Slot: 3, id: \"combatgear:pacific_boots\", tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, Count: 1b}, {Slot: 5, id: \"tacz:modern_kinetic_gun\", tag: {HasBulletInBarrel: 1b, GunCurrentAmmoCount: 5, GunFireMode: \"SEMI\", GunId: \"ww:type99\"}, Count: 1b}, {Slot: 6, id: \"lrtactical:throwable\", tag: {ThrowableId: \"lrtactical:m67\"}, Count: 3b}, {Slot: 7, id: \"combatgear:bandages\", Count: 8b}, {Slot: 8, id: \"minecraft:tnt\", Count: 3b}, {Slot: 9, id: \"minecraft:iron_shovel\", tag: {Damage: 0}, Count: 1b}, {Slot: 10, id: \"minecraft:flint_and_steel\", tag: {Damage: 0}, Count: 1b}, {Slot: 11, id: \"tacz:ammo\", tag: {AmmoId: \"ww:77a\"}, Count: 48b}, {Slot: 12, id: \"tacz:ammo\", tag: {AmmoId: \"ww:77a\"}, Count: 48b}, {Slot: 13, id: \"tacz:ammo\", tag: {AmmoId: \"ww:77a\"}, Count: 48b}, {Slot: 14, id: \"tacz:ammo\", tag: {AmmoId: \"ww:77a\"}, Count: 48b}, {Slot: 15, id: \"tacz:ammo\", tag: {AmmoId: \"ww:77a\"}, Count: 48b}, {Slot: 16, id: \"tacz:ammo\", tag: {AmmoId: \"ww:77a\"}, Count: 48b}, {Slot: 17, id: \"tacz:ammo\", tag: {AmmoId: \"ww:77a\"}, Count: 48b}, {Slot: 18, id: \"tacz:ammo\", tag: {AmmoId: \"ww:77a\"}, Count: 48b}, {Slot: 19, id: \"tacz:ammo\", tag: {AmmoId: \"ww:77a\"}, Count: 48b}, {Slot: 20, id: \"tacz:ammo\", tag: {AmmoId: \"ww:77a\"}, Count: 48b}, {Slot: 21, id: \"tacz:ammo\", tag: {AmmoId: \"ww:77a\"}, Count: 48b}, {Slot: 22, id: \"tacz:ammo\", tag: {AmmoId: \"ww:77a\"}, Count: 48b}]}}}",
+          "give": false,
+          "soldier": "rifleman"
+        },
+        {
+          "item": "steves_army:soldier_spawn_egg",
+          "count": 3,
+          "nbt": "{RepairCost: 0, display: {Name: '{\"text\":\"japan-mg-type99 LMG\"}'}, EntityTag: {Inventory: {Items: [{Slot: 0, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:pacific_helmet\"}, {Slot: 1, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:wwi_chestplate\"}, {Slot: 2, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:drab_leggings\"}, {Slot: 3, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:pacific_boots\"}, {Slot: 5, Count: 1b, tag: {HasBulletInBarrel: 1b, GunCurrentAmmoCount: 30, GunFireMode: \"SEMI\", GunId: \"ww:t99\"}, id: \"tacz:modern_kinetic_gun\"}, {Slot: 6, id: \"lrtactical:throwable\", tag: {ThrowableId: \"lrtactical:m67\"}, Count: 3b}, {Slot: 7, Count: 8b, id: \"combatgear:bandages\"}, {Slot: 8, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 9, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 10, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 11, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 12, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 13, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 14, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 15, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 16, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 17, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 18, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 19, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 20, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 21, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}]}}}",
+          "give": false,
+          "soldier": "machine_gunner"
+        },
+        {
+          "item": "steves_army:soldier_spawn_egg",
+          "count": 2,
+          "nbt": "{RepairCost: 0, display: {Name: '{\"text\":\"japan-AT-rpg7\"}'}, EntityTag: {Inventory: {Items:[{Count:1b,Slot:0,id:\"combatgear:pacific_helmet\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:1,id:\"combatgear:wwi_chestplate\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:2,id:\"combatgear:drab_leggings\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:3,id:\"combatgear:pacific_boots\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:4,id:\"tacz:modern_kinetic_gun\",tag:{GunCurrentAmmoCount:1,GunFireMode:\"SEMI\",GunId:\"tacz:rpg7\",HasBulletInBarrel:1b}},{Count:1b,Slot:5,id:\"tacz:modern_kinetic_gun\",tag:{GunCurrentAmmoCount:30,GunFireMode:\"AUTO\",GunId:\"ww:t100\",HasBulletInBarrel:1b}},{Count:8b,Slot:6,id:\"combatgear:bandages\"},{Count:1b,Slot:7,id:\"combatgear:knife\",tag:{Damage:0}},{Count:1b,Slot:8,id:\"smallarm:lunge_mine\"},{Count:2b,Slot:9,id:\"lrtactical:throwable\",tag:{ThrowableId:\"lrtactical:smoke_grenade\"}},{Count:1b,Slot:10,id:\"minecraft:iron_shovel\",tag:{Damage:0}},{Count:4b,Slot:11,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:rpg_rocket\"}},{Count:60b,Slot:12,id:\"tacz:ammo\",tag:{AmmoId:\"ww:8mm\"}},{Count:60b,Slot:13,id:\"tacz:ammo\",tag:{AmmoId:\"ww:8mm\"}},{Count:60b,Slot:14,id:\"tacz:ammo\",tag:{AmmoId:\"ww:8mm\"}},{Count:60b,Slot:15,id:\"tacz:ammo\",tag:{AmmoId:\"ww:8mm\"}},{Count:60b,Slot:16,id:\"tacz:ammo\",tag:{AmmoId:\"ww:8mm\"}},{Count:60b,Slot:17,id:\"tacz:ammo\",tag:{AmmoId:\"ww:8mm\"}}]}}}",
+          "give": false,
+          "soldier": "anti_tank"
+        }
+      ]
+    },
+    "USMC.tank": {
+      "cooldown": 0,
+      "items": [
+        {
+          "slot": "head",
+          "item": "combatgear:tankcap_helmet",
+          "nbt": "{Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}"
+        },
+        {
+          "slot": "chest",
+          "item": "combatgear:wwi_chestplate",
+          "nbt": "{Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}"
+        },
+        {
+          "slot": "legs",
+          "item": "combatgear:drab_leggings",
+          "nbt": "{Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}"
+        },
+        {
+          "slot": "feet",
+          "item": "combatgear:pacific_boots",
+          "nbt": "{Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}"
+        },
+        {
+          "item": "pointblank:m1911a1",
+          "count": 1
+        },
+        {
+          "item": "pointblank:ammocreative",
+          "count": 64
+        },
+        {
+          "item": "combatgear:pillsui",
+          "count": 1
+        },
+        {
+          "item": "steves_army:soldier_spawn_egg",
+          "count": 9,
+          "nbt": "{RepairCost: 0, display: {Name: '{\"text\":\"USMC-Assault-M1 garand\"}'}, EntityTag: {Inventory: {Items: [{Slot: 0, id: \"combatgear:snow_helmet\", tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, Count: 1b}, {Slot: 1, id: \"combatgear:pacific_chestplate\", tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, Count: 1b}, {Slot: 2, id: \"combatgear:pacific_leggings\", tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, Count: 1b}, {Slot: 3, id: \"combatgear:pacific_boots\", tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, Count: 1b}, {Slot: 5, id: \"tacz:modern_kinetic_gun\", tag: {HasBulletInBarrel: 1b, GunCurrentAmmoCount: 8, GunFireMode: \"SEMI\", GunId: \"ww:m1g\"}, Count: 1b}, {Slot: 6, id: \"lrtactical:throwable\", tag: {ThrowableId: \"lrtactical:m67\"}, Count: 3b}, {Slot: 7, id: \"combatgear:bandages\", Count: 8b}, {Slot: 8, id: \"minecraft:tnt\", Count: 3b}, {Slot: 9, id: \"minecraft:iron_shovel\", tag: {Damage: 0}, Count: 1b}, {Slot: 10, id: \"minecraft:flint_and_steel\", tag: {Damage: 0}, Count: 1b}, {Slot: 11, id: \"tacz:ammo\", tag: {AmmoId: \"tacz:30_06\"}, Count: 36b}, {Slot: 12, id: \"tacz:ammo\", tag: {AmmoId: \"tacz:30_06\"}, Count: 36b}, {Slot: 13, id: \"tacz:ammo\", tag: {AmmoId: \"tacz:30_06\"}, Count: 36b}, {Slot: 14, id: \"tacz:ammo\", tag: {AmmoId: \"tacz:30_06\"}, Count: 36b}, {Slot: 15, id: \"tacz:ammo\", tag: {AmmoId: \"tacz:30_06\"}, Count: 36b}, {Slot: 16, id: \"tacz:ammo\", tag: {AmmoId: \"tacz:30_06\"}, Count: 36b}, {Slot: 17, id: \"tacz:ammo\", tag: {AmmoId: \"tacz:30_06\"}, Count: 36b}, {Slot: 18, id: \"tacz:ammo\", tag: {AmmoId: \"tacz:30_06\"}, Count: 36b}, {Slot: 19, id: \"tacz:ammo\", tag: {AmmoId: \"tacz:30_06\"}, Count: 36b}, {Slot: 20, id: \"tacz:ammo\", tag: {AmmoId: \"tacz:30_06\"}, Count: 36b}, {Slot: 21, id: \"tacz:ammo\", tag: {AmmoId: \"tacz:30_06\"}, Count: 36b}, {Slot: 22, id: \"minecraft:barrel\", tag: {display: {Lore: ['\"(+NBT)\"']}, BlockEntityTag: {id: \"minecraft:barrel\", Items: [{Slot: 0b, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:snow_helmet\"}, {Slot: 1b, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:pacific_chestplate\"}, {Slot: 2b, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:pacific_leggings\"}, {Slot: 3b, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:pacific_boots\"}, {Slot: 4b, Count: 1b, tag: {HasBulletInBarrel: 1b, GunCurrentAmmoCount: 8, GunFireMode: \"SEMI\", GunId: \"ww:m1g\"}, id: \"tacz:modern_kinetic_gun\"}, {Slot: 5b, Count: 3b, id: \"lrtactical:throwable\", tag: {ThrowableId: \"lrtactical:m67\"}}, {Slot: 6b, Count: 8b, id: \"combatgear:bandages\"}, {Slot: 7b, Count: 3b, id: \"minecraft:tnt\"}, {Slot: 8b, Count: 1b, tag: {Damage: 0}, id: \"minecraft:flint_and_steel\"}, {Slot: 9b, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 10b, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 11b, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 12b, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 13b, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 14b, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 15b, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 16b, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 17b, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 18b, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 19b, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 20b, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 22b, Count: 1b, tag: {Damage: 0}, id: \"minecraft:iron_shovel\"}]}}, Count: 1b}, {Slot: 23, id: \"tacz:ammo\", tag: {AmmoId: \"tacz:30_06\"}, Count: 36b}]}}}",
+          "give": false,
+          "soldier": "rifleman"
+        },
+        {
+          "item": "steves_army:soldier_spawn_egg",
+          "count": 3,
+          "nbt": "{RepairCost: 0, display: {Name: '{\"text\":\"USMC-MG-BAR\"}'}, EntityTag: {Inventory: {Items: [{Slot: 0, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:snow_helmet\"}, {Slot: 1, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:pacific_chestplate\"}, {Slot: 2, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:pacific_leggings\"}, {Slot: 3, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:pacific_boots\"}, {Slot: 5, Count: 1b, tag: {HasBulletInBarrel: 1b, GunCurrentAmmoCount: 20, GunFireMode: \"AUTO\", GunId: \"ww:m1918a1\"}, id: \"tacz:modern_kinetic_gun\"}, {Slot: 6, id: \"lrtactical:throwable\", tag: {ThrowableId: \"lrtactical:m67\"}, Count: 3b}, {Slot: 7, Count: 8b, id: \"combatgear:bandages\"}, {Slot: 8, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 9, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 10, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 11, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 12, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 13, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 14, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 15, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 16, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 17, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 18, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 19, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 20, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}, {Slot: 21, Count: 36b, tag: {AmmoId: \"tacz:30_06\"}, id: \"tacz:ammo\"}]}}}",
+          "give": false,
+          "soldier": "machine_gunner"
+        },
+        {
+          "item": "steves_army:soldier_spawn_egg",
+          "count": 2,
+          "nbt": "{RepairCost: 0, display: {Name: '{\"text\":\"USMC-AT-rpg7\"}'}, EntityTag: {Inventory: {Items:[{Count:1b,Slot:0,id:\"combatgear:snow_helmet\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:1,id:\"combatgear:pacific_chestplate\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:2,id:\"combatgear:pacific_leggings\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:3,id:\"combatgear:pacific_boots\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:4,id:\"tacz:modern_kinetic_gun\",tag:{GunCurrentAmmoCount:1,GunFireMode:\"UNKNOWN\",GunId:\"tacz:rpg7\",HasBulletInBarrel:0b}},{Count:1b,Slot:5,id:\"tacz:modern_kinetic_gun\",tag:{GunCurrentAmmoCount:20,GunFireMode:\"AUTO\",GunId:\"ww:m28s\",HasBulletInBarrel:1b}},{Count:3b,Slot:6,id:\"lrtactical:throwable\",tag:{ThrowableId:\"lrtactical:m67\"}},{Count:2b,Slot:7,id:\"lrtactical:throwable\",tag:{ThrowableId:\"lrtactical:smoke_grenade\"}},{Count:1b,Slot:8,id:\"minecraft:iron_shovel\",tag:{Damage:0}},{Count:1b,Slot:9,id:\"combatgear:knife\",tag:{Damage:0}},{Count:8b,Slot:10,id:\"combatgear:bandages\"},{Count:6b,Slot:11,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:rpg_rocket\"}},{Count:40b,Slot:12,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:45acp\"}},{Count:60b,Slot:13,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:45acp\"}},{Count:60b,Slot:14,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:45acp\"}},{Count:60b,Slot:15,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:45acp\"}},{Count:60b,Slot:16,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:45acp\"}},{Count:60b,Slot:17,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:45acp\"}}]}}}",
+          "give": false,
+          "soldier": "anti_tank"
+        }
+      ]
+    },
     "japan.standard": {
       "cooldown": 0,
       "items": [
@@ -121,6 +237,13 @@
           "nbt": "{RepairCost: 0, display: {Name: '{\"text\":\"japan-mg-type99 LMG\"}'}, EntityTag: {Inventory: {Items: [{Slot: 0, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:pacific_helmet\"}, {Slot: 1, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:wwi_chestplate\"}, {Slot: 2, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:drab_leggings\"}, {Slot: 3, Count: 1b, tag: {Damage: 0, Enchantments: [{id: \"minecraft:vanishing_curse\", lvl: 1s}]}, id: \"combatgear:pacific_boots\"}, {Slot: 5, Count: 1b, tag: {HasBulletInBarrel: 1b, GunCurrentAmmoCount: 30, GunFireMode: \"SEMI\", GunId: \"ww:t99\"}, id: \"tacz:modern_kinetic_gun\"}, {Slot: 6, id: \"lrtactical:throwable\", tag: {ThrowableId: \"lrtactical:m67\"}, Count: 3b}, {Slot: 7, Count: 8b, id: \"combatgear:bandages\"}, {Slot: 8, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 9, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 10, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 11, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 12, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 13, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 14, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 15, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 16, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 17, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 18, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 19, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 20, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}, {Slot: 21, Count: 48b, tag: {AmmoId: \"ww:77a\"}, id: \"tacz:ammo\"}]}}}",
           "give": false,
           "soldier": "machine_gunner"
+        },
+        {
+          "item": "steves_army:soldier_spawn_egg",
+          "count": 2,
+          "nbt": "{RepairCost: 0, display: {Name: '{\"text\":\"japan-AT-rpg7\"}'}, EntityTag: {Inventory: {Items:[{Count:1b,Slot:0,id:\"combatgear:pacific_helmet\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:1,id:\"combatgear:wwi_chestplate\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:2,id:\"combatgear:drab_leggings\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:3,id:\"combatgear:pacific_boots\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:4,id:\"tacz:modern_kinetic_gun\",tag:{GunCurrentAmmoCount:1,GunFireMode:\"SEMI\",GunId:\"tacz:rpg7\",HasBulletInBarrel:1b}},{Count:1b,Slot:5,id:\"tacz:modern_kinetic_gun\",tag:{GunCurrentAmmoCount:30,GunFireMode:\"AUTO\",GunId:\"ww:t100\",HasBulletInBarrel:1b}},{Count:8b,Slot:6,id:\"combatgear:bandages\"},{Count:1b,Slot:7,id:\"combatgear:knife\",tag:{Damage:0}},{Count:1b,Slot:8,id:\"smallarm:lunge_mine\"},{Count:2b,Slot:9,id:\"lrtactical:throwable\",tag:{ThrowableId:\"lrtactical:smoke_grenade\"}},{Count:1b,Slot:10,id:\"minecraft:iron_shovel\",tag:{Damage:0}},{Count:4b,Slot:11,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:rpg_rocket\"}},{Count:60b,Slot:12,id:\"tacz:ammo\",tag:{AmmoId:\"ww:8mm\"}},{Count:60b,Slot:13,id:\"tacz:ammo\",tag:{AmmoId:\"ww:8mm\"}},{Count:60b,Slot:14,id:\"tacz:ammo\",tag:{AmmoId:\"ww:8mm\"}},{Count:60b,Slot:15,id:\"tacz:ammo\",tag:{AmmoId:\"ww:8mm\"}},{Count:60b,Slot:16,id:\"tacz:ammo\",tag:{AmmoId:\"ww:8mm\"}},{Count:60b,Slot:17,id:\"tacz:ammo\",tag:{AmmoId:\"ww:8mm\"}}]}}}",
+          "give": false,
+          "soldier": "anti_tank"
         }
       ]
     },
@@ -246,6 +369,13 @@
           "soldier": "machine_gunner"
         },
         {
+          "item": "steves_army:soldier_spawn_egg",
+          "count": 2,
+          "nbt": "{RepairCost: 0, display: {Name: '{\"text\":\"USMC-AT-rpg7\"}'}, EntityTag: {Inventory: {Items:[{Count:1b,Slot:0,id:\"combatgear:snow_helmet\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:1,id:\"combatgear:pacific_chestplate\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:2,id:\"combatgear:pacific_leggings\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:3,id:\"combatgear:pacific_boots\",tag:{Damage:0,Enchantments:[{id:\"minecraft:vanishing_curse\",lvl:1s}]}},{Count:1b,Slot:4,id:\"tacz:modern_kinetic_gun\",tag:{GunCurrentAmmoCount:1,GunFireMode:\"UNKNOWN\",GunId:\"tacz:rpg7\",HasBulletInBarrel:0b}},{Count:1b,Slot:5,id:\"tacz:modern_kinetic_gun\",tag:{GunCurrentAmmoCount:20,GunFireMode:\"AUTO\",GunId:\"ww:m28s\",HasBulletInBarrel:1b}},{Count:3b,Slot:6,id:\"lrtactical:throwable\",tag:{ThrowableId:\"lrtactical:m67\"}},{Count:2b,Slot:7,id:\"lrtactical:throwable\",tag:{ThrowableId:\"lrtactical:smoke_grenade\"}},{Count:1b,Slot:8,id:\"minecraft:iron_shovel\",tag:{Damage:0}},{Count:1b,Slot:9,id:\"combatgear:knife\",tag:{Damage:0}},{Count:8b,Slot:10,id:\"combatgear:bandages\"},{Count:6b,Slot:11,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:rpg_rocket\"}},{Count:40b,Slot:12,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:45acp\"}},{Count:60b,Slot:13,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:45acp\"}},{Count:60b,Slot:14,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:45acp\"}},{Count:60b,Slot:15,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:45acp\"}},{Count:60b,Slot:16,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:45acp\"}},{Count:60b,Slot:17,id:\"tacz:ammo\",tag:{AmmoId:\"tacz:45acp\"}}]}}}",
+          "give": false,
+          "soldier": "anti_tank"
+        },
+        {
           "item": "computercraft:computer_advanced",
           "nbt": "{ComputerId: 0}"
         },
@@ -256,30 +386,6 @@
     }
   },
   "repair_kits": [
-    {
-      "item": "combatgear:wwi_chestplate",
-      "count": 1
-    },
-    {
-      "item": "combatgear:drab_leggings",
-      "count": 1
-    },
-    {
-      "item": "combatgear:pacific_boots",
-      "count": 1
-    },
-    {
-      "item": "combatgear:tankcap_helmet",
-      "count": 1
-    },
-    {
-      "item": "pointblank:ammocreative",
-      "count": 64
-    },
-    {
-      "item": "pointblank:m1911a1",
-      "count": 1
-    },
     {
       "item": "trackwork:suspension_track",
       "count": 24
@@ -311,10 +417,7 @@
     {
       "item": "vs_clockwork:gravitron",
       "count": 1
-    },
-    {
-      "item": "combatgear:pillsui",
-      "count": 1
     }
+
   ]
 }

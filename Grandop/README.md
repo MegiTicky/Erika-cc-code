@@ -10,7 +10,8 @@ One Command Computer runs the complete event:
 - The staged-capture objective and bossbar.
 - The chat-button infantry and tank respawn menus.
 - Infantry class loadouts and teleports.
-- Tank deployment, stock, and cooldown tracking.
+- Tank deployment via VMod server schematics, availability, and respawn
+  cooldown tracking.
 - The `Troops_Strength` sidebar and reinforcement quotas.
 - Japan town retreat handling as objectives advance.
 
@@ -111,7 +112,8 @@ Mission configuration valid: lieyu_phase_2
 
 The unified event controller writes `/data/mission_state_<mission>.state` for
 each running match. The snapshot contains objective progress, stage, tickets,
-reinforcement quotas, vehicle stock, retreat flags, and paused state. It is
+reinforcement quotas, vehicle availability state (active tanks, respawn
+cooldowns, name counters), retreat flags, and paused state. It is
 checkpointed after deployments, operator changes, stage changes, and every 15
 seconds. Restarting the controller restores this state automatically.
 
@@ -122,16 +124,19 @@ closed instead of silently overwriting live match progress. Investigate it, or
 perform an intentional reset, before starting the controller again.
 
 Use `Stop and reset new match` on the operator terminal before a fresh match.
-After the controller stops, it clears the snapshot and legacy vehicle stock,
-removes the complete `Troops_Strength` objective (including stale entries such
-as `USReinforcement` and `JPSpawn`), removes old quota teams, and recreates the
-current Phase 2 quota defaults. The reset flags below remain available for
-unattended ROM-started deployments.
+After the controller stops, it clears the snapshot (including vehicle
+availability state), removes the complete `Troops_Strength` objective
+(including stale entries such as `USReinforcement` and `JPSpawn`), removes old
+quota teams, and recreates the current Phase 2 quota defaults. The reset flags
+below remain available for unattended ROM-started deployments.
 
 The mission deliberately preserves persistent state by default:
 
 - `Troops_Strength` preserves troop consumption between controller restarts.
-- `tanksList.txt` preserves current tank stock between controller restarts.
+- Vehicle availability state (active tanks, cooldowns, name counters) is
+  preserved inside the mission snapshot. Tanks added to or removed from the
+  mission's `vehiclePools` take effect on the next start without wiping that
+  state.
 
 For a brand-new match or an intentional full reset without the operator
 backend, edit `missions/lieyu_phase_2.lua` on the event computer and
@@ -293,10 +298,109 @@ exhausts Town X when stage 2 begins and Town Y when stage 3 begins.
 
 ### Tanks
 
-- USMC starts with three `sherman75usmc` tanks.
-- Japan starts with two `chinu` tanks and one `horo` tank.
-- Tank cooldowns are 180 seconds.
-- Tank stock is stored in `tanksList.txt` on the event computer.
+Tanks spawn directly from VMod server schematics instead of teleporting
+pre-placed ships out of a depot. Each deployment runs
+`/vmod schem load-from-sever <schematic>` (the `sever` spelling is VMod's
+actual command), then `/vmod schem place X Y Z (rotation) <shipName>` at the
+selected vehicle spawn location. The rotation argument is required in
+VMod 0.1.3 and must be parenthesized (e.g. `(0 0 0)` for identity); the
+spawner always sends one. A
+temporary chunk loader is placed at the
+target so placement works in unloaded chunks, and the radar confirms the new
+ship appeared. Do not trust the command status: VMod 0.1.3 returns a failure
+code for load AND place even when they succeed (and soft-fails with a success
+code when they don't) — the radar check is the only reliable signal.
+
+The deploying tanker is teleported onto the new hull in **survival** mode —
+there is no creative staging around the vehicle spawns anymore (the mission's
+`creativeZones` returns an empty list, and both spawn paths force
+`/gamemode survival`). The tanker's personal kit comes from a
+`<faction>.tank` class in the loadout JSON, applied exactly like the infantry
+classes: armor worn directly into the armor slots (tanker cap, chestplate,
+leggings, boots), a sidearm with creative ammo, and utility items. The class's
+`steves_army:soldier_spawn_egg` entries also give the tanker a full rifle
+squad — the same 14 soldiers infantry gets (9 riflemen, 3 machine gunners,
+2 anti-tank) — spawned in a ring of 20 blocks around the player (infantry
+squads use 2) so the soldiers don't materialize on the vehicle deck.
+Field-repair materials
+still come from the JSON's `repair_kits` list.
+
+Availability follows a Battlefield-style model configured in the mission's
+`vehiclePools.initial`:
+
+- The respawn `cooldown` (seconds) **starts at spawn time**, exactly like
+  Battlefield. While it counts down the tank type cannot spawn at all —
+  even if a slot is free. Once it has expired, the next destruction or
+  abandonment frees the slot for an immediate respawn.
+- `maxLive` caps how many tanks of that type may exist at once. There is no
+  finite stock.
+- A tank leaves the active set through any of these triggers (none of them
+  touches the cooldown — the slot simply frees):
+  - **Abandonment** (primary): when the owner (or any player) leaves the
+    `abandonRadius` around the hull, the owner is warned once that the tank
+    counts as destroyed in `abandonSeconds` (mission fields `abandonRadius`,
+    default 20; `abandonSeconds`, default 30). If nobody returns in time,
+    the whole vehicle — every ship of it — is recalled to the reserve depot
+    (frozen and teleported there). Returning clears the timer and re-arms
+    the warning for the next departure.
+  - **Destruction marker** (owner tool): the owner permanently carries an
+    unbreakable renamed carrot-on-a-stick (`markerLabel`, e.g. "Tank
+    Destruction Marker"). Right-clicking it instantly recalls the vehicle
+    to the depot. Detection is a `gptankmarker` scoreboard objective on the
+    `minecraft.used:minecraft.carrot_on_a_stick` criterion, polled every
+    second. A non-destructive presence check (NBT-exact `execute if data`
+    against the player inventory) runs every second; the marker is only
+    re-issued (clear-all + give-one) when it is actually missing — dropped,
+    moved out of the inventory, or lost to a soldier respawn — so the item
+    never flickers while carried. Losing the vehicle strips the
+    marker and zeroes the score so a stale right-click can never kill a
+    freshly spawned tank.
+  - **Destruction** (secondary): if the hull fully breaks apart, its radar ID
+    disappears and the vehicle is declared destroyed immediately; surviving
+    sub-ships are recalled to the depot too. Sub-ships that break while the
+    hull lives are only pruned from tracking.
+- Optional per-tank fields: `schematic` (server schematic file name including
+  the `.vschem` extension, defaults to `<tank>.vschem`), `rotation`
+  (`{ pitch, yaw, roll }`), and `anchorOffset` (`{ x, y, z }` placement
+  correction).
+- Admin `+/-` buttons on the tank monitor adjust `maxLive`.
+
+Current pools: `japan.chinu` and `USMC.sherman75usmc`, each `maxLive = 1`
+with a 180-second respawn cooldown.
+
+One-time world-side prerequisites per server:
+
+1. Save each tank type as a server schematic named exactly like the tank:
+   `/vmod schem save-to-server chinu`,
+   `/vmod schem save-to-server sherman75usmc`. Multi-island schematics
+   (a tank whose hull and wheel blocks form several disconnected ships)
+   are supported — every island is tracked, recalled, and cleaned up
+   together.
+   The load name is the plain name plus the `.vschem` extension — VMod
+   0.1.3 resolves the name literally, so the spawner sends `chinu.vschem`.
+   A load failure logs `Failed to load file ... NoSuchFileException` in
+   `logs/latest.log`.
+2. Calibrate the placement once: the schematic anchor may not sit exactly on
+   the spawn coordinates or face the intended direction. Adjust
+   `anchorOffset` and `rotation` in the mission's `vehiclePools` to correct
+   it.
+
+For a quick isolated check, run `test_schematic_spawn chinu` on the event
+computer: it spawns the schematic a few blocks from the computer with a
+`test-chinu-N-` name base, reports EVERY ship the placement created (island
+count, ids, masses), and prints the full feedback of every load/place
+command.
+
+Naming: the spawner passes VMod the vehicle slug `<tank>-<vehicleNumber>-`
+(e.g. `chinu-5-`), and VMod renames every ship of a multi-island placement
+to `<slug>0`, `<slug>1`, ... — so vehicle 5 spawns as `chinu-5-0` (hull,
+heaviest island), `chinu-5-1`, etc. A single-island schematic keeps the
+bare slug (`chinu-5-`). The vehicle number is our own monotonic counter
+(persisted in the snapshot) and only advances after a confirmed spawn, so
+failed placements never consume a number; names never collide with
+reserve-parked tanks. VMod's ship index is never parsed — recall and
+cleanup address the ships by trying the slug patterns. A player's previous
+vehicle (all its ships) is moved (and frozen) to the `reserve` area.
 
 ## Tickets And Troop Strength
 
@@ -459,9 +563,23 @@ infantry-only.
 ### Tank Deployment Fails
 
 - Confirm `sp_radar` is attached and working.
-- Check that a tank remains in `tanksList.txt`.
-- Wait for the 180-second tank cooldown if the menu says it is active.
+- Confirm the server schematic exists: `/vmod schem save-to-server <tank>`
+  must have been run once for the tank type on that server. If
+  `logs/latest.log` shows `NoSuchFileException: VMod-Schematics\<name>`, the
+  schematic file is missing — the folder must contain `<name>.vschem`.
+- `Incomplete (expected ... coordinates)` feedback on the place command means
+  the rotation argument is missing or unparenthesized — VMod 0.1.3 requires
+  a bracketed vector like `(0 0 0)`; the spawner always sends one.
+- Run `test_schematic_spawn <tank>` on the computer to isolate the problem:
+  it prints the raw feedback of every load/place command.
+- Check the tank's availability in the menu: `in use` means the concurrent
+  cap is reached (destroy the live tank or raise `maxLive`), `cooldown`
+  counts down from the last destruction.
+- Confirm the event computer may run `/vmod schem` commands (non-player
+  command sources need permission level 4 for VMod commands).
 - Verify the selected vehicle spawn location is valid and unobstructed.
+- Watch the placement on the first run: if the tank lands offset or facing
+  the wrong way, calibrate `anchorOffset`/`rotation` in the mission file.
 
 ## Important Files
 
@@ -472,7 +590,6 @@ infantry-only.
 | `missions/lieyu_phase_2.lua` | Map locations, quotas, vehicles, stages, and features |
 | `data/loadouts/lieyu_phase_2.json` | Infantry class items and armor |
 | `lib/respawn/book.lua` | Chat-button respawn state machine |
-| `lib/respawn/vehicles.lua` | Tank deployment and stock handling |
-| `tanksList.txt` | Persistent current tank stock on the event computer |
+| `lib/respawn/vehicles.lua` | Schematic tank deployment and availability handling |
 | `/logs/event_lieyu_phase_2_*.log` | Runtime event logs |
 | `Grandop/manifests/phase_2_event.txt` | GitHub installation bundle manifest |

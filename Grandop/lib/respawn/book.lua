@@ -14,6 +14,9 @@ local TANK_SPAWN_TRIGGER = "g_resp_tspawn"
 local RESET_TRIGGER = "g_resp_reset"
 local SESSION_AGE_OBJECTIVE = "g_resp_age"
 local SESSION_TIMEOUT = 30
+-- Tanker squads spawn on a wide ring (infantry uses 2) so the soldiers
+-- don't materialize on the vehicle deck.
+local TANK_SQUAD_RADIUS = 20
 local TRIGGER_OBJECTIVES = {
     MODE_TRIGGER,
     CLASS_TRIGGER,
@@ -42,11 +45,11 @@ local function page(title, entries)
         { text = title .. "\n\n", color = "gold", bold = true },
     }
     for _, entry in ipairs(entries) do
-        table.insert(result, {
-            text = "[ " .. entry.label .. " ]\n",
-            color = entry.color or "green",
-            clickEvent = { action = "run_command", value = entry.command },
-        })
+        local item = { text = "[ " .. entry.label .. " ]\n", color = entry.color or "green" }
+        if entry.command then
+            item.clickEvent = { action = "run_command", value = entry.command }
+        end
+        table.insert(result, item)
     end
     table.insert(result, {
         text = "[ Reset menu ]\n",
@@ -114,16 +117,21 @@ local function classBook(area, data, faction, team, target)
     return false
 end
 
-local function tankBook(area, faction, team, tanks, target)
+local function tankBook(area, faction, team, tanks, target, statusFn)
     local entries = {}
     local list = tanks[faction] or {}
     local names = {}
-    for name, value in pairs(list) do
-        if (value.stock or 0) > 0 then table.insert(names, name) end
+    for name in pairs(list) do
+        table.insert(names, name)
     end
     table.sort(names)
     for i, name in ipairs(names) do
-        table.insert(entries, { label = name .. " (" .. list[name].stock .. ")", command = "/trigger " .. TANK_TRIGGER .. " set " .. i })
+        local ok, info = statusFn(name)
+        if ok then
+            table.insert(entries, { label = name .. " (" .. tostring(info) .. ")", command = "/trigger " .. TANK_TRIGGER .. " set " .. i })
+        else
+            table.insert(entries, { label = name .. " (" .. tostring(info) .. ")", color = "gray" })
+        end
     end
     if #entries > 0 then
         return sendMenu(target or waitingSelector(team, "grandop_wait_tank"), "Choose " .. faction .. " Tank", entries)
@@ -161,6 +169,22 @@ local function processingSelector(team)
     return "@a[team=" .. team .. ",tag=grandop_processing,limit=1]"
 end
 
+-- The processing selector only matches while the grandop_processing tag is
+-- on, but tank ownership outlives the spawn session (warnings, marker
+-- upkeep). Resolve it to the actual player name: parse /list, then test
+-- each online player against the processing filter for this team.
+local function resolveProcessingPlayer(team)
+    local ok, out = commands.exec("list")
+    local namesPart = type(out) == "table" and tostring(out[1] or ""):match("online:%s*(.+)$") or nil
+    if not namesPart then return nil end
+    for name in namesPart:gmatch("[^,%s]+") do
+        if commands.exec(("execute if entity @a[team=%s,tag=grandop_processing,name=%s]"):format(team, name)) then
+            return name
+        end
+    end
+    return nil
+end
+
 local function triggerSelector(team, waitTag, objective, value, savedTag)
     local selector = "@a[team=" .. team .. ",tag=" .. waitTag .. ",scores={" .. objective .. "=" .. value .. "}"
     if savedTag then selector = selector .. ",tag=" .. savedTag end
@@ -178,7 +202,10 @@ local function randomTeleport(target, spawn, radius)
         local dz = math.random(-radius, radius)
         local x = math.floor(spawn.x + dx + 0.5)
         local z = math.floor(spawn.z + dz + 0.5)
-        commands.exec(("/tp %s %d %d %d"):format(target, x, spawn.y, z))
+        -- Snap to the terrain surface via the heightmap: the mission's fixed
+        -- spawn.y can sit inside a hill or a ditch across the scatter radius.
+        commands.exec(("execute positioned %d %d %d positioned over motion_blocking run tp %s ~ ~ ~")
+            :format(x, spawn.y, z, target))
     end
 end
 
@@ -191,6 +218,19 @@ function book.run(ctx)
     local features = ctx.features
     local stagingStatus = {}
     local log = ctx.log or print
+
+    local vehicles
+    local v
+    if features.tanks then
+        vehicles = grandopRequire("lib.respawn.vehicles")
+        v = vehicles.newState(respawn.tanks or {}, {
+            abandonRadius = respawn.abandonRadius,
+            abandonSeconds = respawn.abandonSeconds,
+            reserve = respawn.reserve,
+            markerLabel = respawn.markerLabel,
+        })
+        vehicles.ensureMarkerObjective()
+    end
 
     local function resetTrigger(target, objective)
         commands.exec("/scoreboard players set " .. target .. " " .. objective .. " 0")
@@ -336,7 +376,10 @@ function book.run(ctx)
             end
         elseif features.tanks then
             log("Mode selected: " .. faction .. " tank")
-            if tankBook(area, faction, team, respawn.tanks, target) then
+            local function tankStatus(name)
+                return vehicles.available(v, faction, name)
+            end
+            if tankBook(area, faction, team, respawn.tanks, target, tankStatus) then
                 commands.exec("/tag " .. target .. " add grandop_wait_tank")
                 commands.exec("/tag " .. target .. " remove grandop_wait_mode")
                 enableTrigger(target, TANK_TRIGGER)
@@ -410,18 +453,11 @@ function book.run(ctx)
 
     local function tankNamesForFaction(faction)
         local names = {}
-        for name, config in pairs(respawn.tanks[faction] or {}) do
-            if (config.stock or 0) > 0 then table.insert(names, name) end
+        for name in pairs(respawn.tanks[faction] or {}) do
+            table.insert(names, name)
         end
         table.sort(names)
         return names
-    end
-
-    local vehicles
-    local v
-    if features.tanks then
-        vehicles = grandopRequire("lib.respawn.vehicles")
-        v = vehicles.newState(respawn.tanks or {})
     end
 
     local function processTank(team, tankIndex)
@@ -457,10 +493,11 @@ function book.run(ctx)
         local selector = triggerSelector(team, "grandop_wait_tank_spawn", TANK_SPAWN_TRIGGER, spawnIndex, "grandop_tank_" .. tankIndex)
         if not tankName or not spawn or not commands.exec("execute if entity " .. selector) then return end
         log("Tank spawn selected: " .. faction .. " " .. tankName .. " -> " .. spawn.name)
-        if vehicles.timeToNext(v, faction, tankName) > 0 then
+        local tankReady, tankInfo = vehicles.available(v, faction, tankName)
+        if not tankReady then
             resetTrigger(selector, TANK_SPAWN_TRIGGER)
             enableTrigger(selector, TANK_SPAWN_TRIGGER)
-            commands.exec("/tellraw " .. selector .. " {\"text\":\"Tank cooldown active\",\"color\":\"red\"}")
+            commands.exec("/tellraw " .. selector .. " {\"text\":\"Tank unavailable: " .. tostring(tankInfo) .. "\",\"color\":\"red\"}")
             return
         end
         if respawn.canDeploy and not respawn.canDeploy(faction, "tank") then
@@ -471,6 +508,10 @@ function book.run(ctx)
         end
         commands.exec("/tag " .. selector .. " add grandop_processing")
         local target = processingSelector(team)
+        -- Ownership tracking needs the real player name: the processing
+        -- selector dies with the session tag, but warnings, marker upkeep
+        -- and the old-tank handover must reach the player afterwards.
+        local owner = resolveProcessingPlayer(team) or target
         resetTrigger(target, TANK_SPAWN_TRIGGER)
         resetTrigger(target, SESSION_AGE_OBJECTIVE)
         local deployed = vehicles.spawnTank({
@@ -478,18 +519,26 @@ function book.run(ctx)
             country = faction,
             monitor = ctx.monitor,
             radar = ctx.radar,
-            player = target,
+            player = owner,
             mission = respawn,
             spawnPoint = spawn,
             tankName = tankName,
             playerTankMap = state.playerTankMap,
             tankslugtoID = state.tankslugtoID,
             repairKits = data.repair_kits or {},
-            tankListFile = respawn.tankListFile or "tanksList.txt",
             checkpoint = ctx.checkpoint,
         })
         if deployed then
-            vehicles.tryConsume(v, faction, tankName)
+            -- Tanker kit follows the infantry classes: armor worn directly,
+            -- sidearm in inventory, plus a small AI escort around the tank.
+            local tankClass = faction .. ".tank"
+            if loadout.getClass(data, tankClass) then
+                loadout.applyClass(data, tankClass, owner)
+                local squad = stevesArmy.spawnSquadmates(owner, tankClass, data, TANK_SQUAD_RADIUS)
+                if squad > 0 then
+                    log("Spawned " .. squad .. " tanker squadmates for " .. faction)
+                end
+            end
             if respawn.consumeDeployment then respawn.consumeDeployment(faction, "tank") end
             if ctx.checkpoint then ctx.checkpoint("tank deployment") end
             if respawn.displayScoreboard then respawn.displayScoreboard() end
@@ -514,6 +563,10 @@ function book.run(ctx)
                 clearSession("@a[tag=grandop_book]")
                 observedStage = ctx.stage.current
                 log("Cleared respawn sessions after stage change")
+            end
+            if features.tanks then
+                vehicles.reconcile(v, ctx.radar, state)
+                vehicles.processMarkers(v, state)
             end
             commands.exec("/scoreboard players add @a[tag=grandop_book] " .. SESSION_AGE_OBJECTIVE .. " 1")
             for team in pairs(teams) do
