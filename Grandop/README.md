@@ -402,6 +402,34 @@ reserve-parked tanks. VMod's ship index is never parsed — recall and
 cleanup address the ships by trying the slug patterns. A player's previous
 vehicle (all its ships) is moved (and frozen) to the `reserve` area.
 
+### Squad Refill
+
+Missions opt in by defining `respawn.squadRefill = { label, distance }` (see
+`missions/lieyu_phase_2.lua`; presence enables the feature). Every player on
+a match team permanently carries a renamed goat horn ("Squad Refill") whose
+right-click calls in an NPC squad:
+
+- Detection mirrors the tank destruction marker: a per-player score on the
+  `gpsquadrefill` objective (`minecraft.used:minecraft.goat_horn` criterion)
+  polled every second by the respawn service (both the chat-book event
+  controller and the standalone terminal). The objective is fully disjoint
+  from the carrot-on-a-stick marker, so the two items never interfere.
+- The horn is re-issued within a second whenever it is lost (death, drop,
+  kit change), exactly like the marker; a click logged before the horn left
+  the inventory is ignored.
+- One click spends **one deployment ticket** from the nearest infantry spawn
+  pool of the player's faction that still has quota at the current stage
+  (commander spawns are skipped) — for USMC the single global pool, for
+  japan the nearest town with troops. Quota exhausted → the click is
+  discarded with a red "Respawn quota exhausted" message and the ticket is
+  not spent.
+- The standard 14-soldier squad (9 rifle / 3 MG / 2 AT, from the faction's
+  `.standard` class eggs) materializes `distance` blocks (default 50) from
+  the player **in the direction away from the nearest enemy player** (radar
+  scan + scoreboard team check), heightmap-snapped to the surface. With no
+  enemy on radar the squad rings the player itself. The ticket is only spent
+  once soldiers actually spawned.
+
 ## Tickets And Troop Strength
 
 The capture objective starts with 500 tickets for each team. Capturing an

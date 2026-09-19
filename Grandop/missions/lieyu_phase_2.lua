@@ -68,6 +68,12 @@ respawn = {
     abandonSeconds = 30,
     markerLabel = "Tank Destruction Marker",
 
+    -- Squad refill: every teamed player carries a goat horn whose right-click
+    -- calls in a standard NPC squad (9 rifle / 3 MG / 2 AT) 50 blocks away
+    -- from the nearest enemy, costing one ticket from the nearest infantry
+    -- spawn pool that still has quota.
+    squadRefill = { label = "Squad Refill", distance = 50 },
+
     -- Battlefield-style vehicle availability: each tank type has a
     -- concurrent-instance cap (maxLive) and a respawn cooldown that starts
     -- at spawn time — while it runs the type cannot spawn at all, and once

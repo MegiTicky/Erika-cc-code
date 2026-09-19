@@ -4,6 +4,7 @@
 
 local loadout = grandopRequire("lib.loadout")
 local stevesArmy = grandopRequire("lib.steves_army")
+local squadRefill = grandopRequire("lib.respawn.squad_refill")
 
 local book = {}
 local MODE_TRIGGER = "g_resp_mode"
@@ -553,6 +554,10 @@ function book.run(ctx)
     local nextCleanup = 0
     local nextStagingScan = 0
     local observedStage = ctx.stage.current
+    -- Squad refill upkeep rides the same 1s maintenance cadence as the
+    -- vehicle marker; missions opt in by defining respawn.squadRefill.
+    local refillCfg = respawn.squadRefill
+    if refillCfg then squadRefill.ensureObjective() end
     local function hasWaiting(team, tag)
         return commands.exec("execute if entity @a[team=" .. team .. ",tag=" .. tag .. "]")
     end
@@ -567,6 +572,18 @@ function book.run(ctx)
             if features.tanks then
                 vehicles.reconcile(v, ctx.radar, state)
                 vehicles.processMarkers(v, state)
+            end
+            if refillCfg then
+                squadRefill.process({
+                    cfg = refillCfg,
+                    radar = ctx.radar,
+                    teams = mission.teams,
+                    respawn = respawn,
+                    data = data,
+                    stage = ctx.stage,
+                    checkpoint = ctx.checkpoint,
+                    log = log,
+                })
             end
             commands.exec("/scoreboard players add @a[tag=grandop_book] " .. SESSION_AGE_OBJECTIVE .. " 1")
             for team in pairs(teams) do

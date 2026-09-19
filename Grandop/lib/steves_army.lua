@@ -54,16 +54,20 @@ local function inferType(itemsSnbt)
 end
 
 -- Spawn `count` soldiers of `type` in a ring of `radius` blocks around the
--- target player. Each soldier's offset is resolved against the player, then
--- snapped to the terrain surface via the heightmap, so soldiers never spawn
--- at the player's y inside a hillside or in mid-air.
-local function spawnRing(target, soldierType, itemsSnbt, count, radius)
+-- target player, optionally shifted by the `cx`/`cz` offsets (used by the
+-- squad refill to land the ring away from the enemy). Each soldier's offset
+-- is resolved against the player, then snapped to the terrain surface via
+-- the heightmap, so soldiers never spawn at the player's y inside a hillside
+-- or in mid-air.
+local function spawnRing(target, soldierType, itemsSnbt, count, radius, cx, cz)
     radius = radius or 2
+    cx = cx or 0
+    cz = cz or 0
     local spawned = 0
     for i = 0, count - 1 do
         local angle = (i / count) * 2 * math.pi
-        local dx = math.floor(math.cos(angle) * radius + 0.5)
-        local dz = math.floor(math.sin(angle) * radius + 0.5)
+        local dx = cx + math.floor(math.cos(angle) * radius + 0.5)
+        local dz = cz + math.floor(math.sin(angle) * radius + 0.5)
         local cmd = ("execute at %s positioned ~%d ~ ~%d positioned over motion_blocking run stevesarmy spawn %s %s ~ ~ ~ 0 0 %s")
             :format(target, dx, dz, soldierType, target, itemsSnbt)
         local ok = commands.exec(cmd)
@@ -78,8 +82,9 @@ end
 
 -- Spawn all squadmates configured in the deploying player's class kit.
 -- `radius` widens the spawn ring (tankers pass a larger value so soldiers
--- don't materialize on the vehicle deck). Returns the number spawned.
-function stevesArmy.spawnSquadmates(target, className, data, radius)
+-- don't materialize on the vehicle deck) and `cx`/`cz` shift the ring center
+-- as an offset from the player. Returns the number spawned.
+function stevesArmy.spawnSquadmates(target, className, data, radius, cx, cz)
     local cls = loadout.getClass(data, className)
     if not cls then return 0 end
     local total = 0
@@ -91,7 +96,7 @@ function stevesArmy.spawnSquadmates(target, className, data, radius)
             else
                 local soldierType = entry.soldier or inferType(itemsSnbt)
                 if not SOLDIER_TYPES[soldierType] then soldierType = "rifleman" end
-                total = total + spawnRing(target, soldierType, itemsSnbt, entry.count or 1, radius)
+                total = total + spawnRing(target, soldierType, itemsSnbt, entry.count or 1, radius, cx, cz)
             end
         end
     end

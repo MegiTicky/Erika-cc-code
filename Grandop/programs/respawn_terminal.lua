@@ -40,6 +40,7 @@ local loadout = grandopRequire("lib.loadout")
 local stage = grandopRequire("lib.stage_channel")
 local vehicles = grandopRequire("lib.respawn.vehicles")
 local infantry = grandopRequire("lib.respawn.infantry")
+local squad_refill = grandopRequire("lib.respawn.squad_refill")
 local stevesArmy = grandopRequire("lib.steves_army")
 local creative_area = grandopRequire("lib.services.creative_area")
 
@@ -107,6 +108,10 @@ local v = vehicles.newState(tanksList, {
     markerLabel = respawnCfg.markerLabel,
 })
 vehicles.ensureMarkerObjective()
+
+-- Squad refill horn watch: missions opt in by defining respawn.squadRefill.
+local refillCfg = respawnCfg.squadRefill
+if refillCfg then squad_refill.ensureObjective() end
 
 --================================================================--
 -- Scoreboard init + startup hooks
@@ -180,6 +185,23 @@ local function vehicleLifecycleLoop()
     while true do
         vehicles.reconcile(v, radar, runtime)
         vehicles.processMarkers(v, runtime)
+        sleep(1)
+    end
+end
+
+--================================================================--
+-- Squad refill upkeep (goat horn watch; missions opt in)
+--================================================================--
+local function squadRefillLoop()
+    while true do
+        squad_refill.process({
+            cfg = refillCfg,
+            radar = radar,
+            teams = mission.teams,
+            respawn = respawnCfg,
+            data = loadoutData,
+            stage = stageHub,
+        })
         sleep(1)
     end
 end
@@ -347,6 +369,11 @@ local tasks = {
     vehicleLifecycleLoop,
     stage.listener(stageHub),
 }
+
+-- Squad refill horn upkeep is opt-in per mission.
+if refillCfg then
+    table.insert(tasks, squadRefillLoop)
+end
 
 -- Creative staging is optional: only run the zone loop when the mission
 -- actually defines creative zones.
