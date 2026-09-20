@@ -365,8 +365,8 @@ Availability follows a Battlefield-style model configured in the mission's
   correction).
 - Admin `+/-` buttons on the tank monitor adjust `maxLive`.
 
-Current pools: `japan.chinu` and `USMC.sherman75usmc`, each `maxLive = 1`
-with a 180-second respawn cooldown.
+Current pools: `japan.chinu` and `USMC.sherman75usmc`, each `maxLive = 3`
+with a 30-second respawn cooldown.
 
 One-time world-side prerequisites per server:
 

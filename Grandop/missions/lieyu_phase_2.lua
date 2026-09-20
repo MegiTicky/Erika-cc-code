@@ -89,10 +89,10 @@ respawn = {
         policy = "add",
         initial = {
             japan = {
-                chinu = { maxLive = 1, cooldown = 180 },
+                chinu = { maxLive = 3, cooldown = 30 },
             },
             USMC = {
-                sherman75usmc = { maxLive = 1, cooldown = 180 },
+                sherman75usmc = { maxLive = 3, cooldown = 30 },
             },
         },
         additions = {},
