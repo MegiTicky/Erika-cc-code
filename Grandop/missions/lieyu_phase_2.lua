@@ -79,6 +79,12 @@ respawn = {
     -- tags — typically after a relog) without admin help.
     sessionReset = { label = "Reset Menu" },
 
+    -- Weapon squad: the loadout's *.weapon_squad class (player-carried heavy
+    -- weapon + 12-soldier support section) draws from a Battlefield-style
+    -- pool: maxLive operators per faction, cooldown stamped at deployment.
+    -- A slot frees when the operator dies and starts a new respawn session.
+    weaponSquad = { maxLive = 1, cooldown = 120 },
+
     -- Battlefield-style vehicle availability: each tank type has a
     -- concurrent-instance cap (maxLive) and a respawn cooldown that starts
     -- at spawn time — while it runs the type cannot spawn at all, and once

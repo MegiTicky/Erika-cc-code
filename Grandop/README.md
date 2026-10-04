@@ -283,6 +283,33 @@ menu option once and wait for the next menu message.
   and `medic`.
 - Japan: classes are loaded from `data/loadouts/lieyu_phase_2.json`.
 
+### Weapon Squad
+
+The `.weapon_squad` class (`japan.weapon_squad` / `USMC.weapon_squad`) is a
+13-unit heavy-weapons section modeled on the WW2 machine-gun platoon: the
+player carries the section's first gun (USMC: M1919 with ~640 rounds of
+.30-06; japan: a Create Big Cannons autocannon emplacement kit — pre-built
+minecart contraption, rail, cart assemblers, levers, sandbags and five ammo
+containers), and the 12 spawn-egg soldiers mirror a compressed MG section:
+
+- 1 support gunner — the section's second gun (`support` spawn type). The
+  JP AI crew carries its own stationary autocannon kit; the US AI carries an
+  M1919 with 640 rounds.
+- 3 ammo bearers — riflemen whose kits trade TNT and entrenching tools for
+  extra gun ammunition (CBC containers / .30-06 boxes).
+- 2 anti-tank soldiers and 6 riflemen as the security detachment.
+
+Availability is a Battlefield-style pool (`respawn.weaponSquad` in the
+mission): `maxLive` operators per faction and a cooldown stamped at
+deployment. The slot frees when the operator dies and starts a new respawn
+session; a controller restart resets the pool like a fresh match. A blocked
+class shows `[weapon squad deployed]` or `[weapon squad on cooldown Ns]` in
+the class menu and is rejected at spawn selection with the same reason. A
+weapon squad still costs one reinforcement ticket, and the Squad Refill horn
+only refills the `.standard` squad.
+
+Current pool: `maxLive = 1`, `cooldown = 120` per faction.
+
 ### Infantry Spawns
 
 USMC:
@@ -564,7 +591,9 @@ with the bundle command above, then restart the event.
 ### Steve's Army Squadmates
 
 Steve's Army soldier kits live in a class loadout as `steves_army:soldier_spawn_egg`
-entries. Mark each one with `"give": false` and a soldier type:
+entries (or `steves_army:support_spawn_egg` for heavy-weapon crews). Mark each
+one with `"give": false` and a soldier type (`rifleman`, `machine_gunner`,
+`support`, or `anti_tank`):
 
 ```json
 { "item": "steves_army:soldier_spawn_egg", "count": 9, "give": false, "soldier": "rifleman", "nbt": "{...}" }

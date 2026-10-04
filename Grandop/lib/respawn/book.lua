@@ -119,11 +119,16 @@ local function factionBook(target, faction, allowTanks)
     return sendMenu(target, faction .. " Respawn", mode)
 end
 
-local function classBook(area, data, faction, team, target)
+local function classBook(area, data, faction, team, target, statusFn)
     local entries = {}
     for i, className in ipairs(factionClasses(data, faction)) do
         local short = className:sub(#faction + 2)
-        table.insert(entries, { label = short, command = "/trigger " .. CLASS_TRIGGER .. " set " .. i })
+        local label = short
+        if statusFn then
+            local ok, info = statusFn(className)
+            if not ok then label = short .. " [" .. info .. "]" end
+        end
+        table.insert(entries, { label = label, command = "/trigger " .. CLASS_TRIGGER .. " set " .. i })
     end
     if #entries > 0 then
         return sendMenu(target or waitingSelector(team, "grandop_wait_class"), "Choose " .. faction .. " Class", entries)
@@ -239,6 +244,52 @@ function book.run(ctx)
     local stagingStatus = {}
     local log = ctx.log or print
 
+    -- Weapon-squad pool (Battlefield-style, mirrors the tank pools): the
+    -- *.weapon_squad class is capped at maxLive operators per faction and
+    -- each deployment stamps a cooldown. An operator's slot frees when their
+    -- next respawn session starts (i.e. they died); the cooldown always runs
+    -- from deployment time. In-memory only: a controller restart resets the
+    -- pool, same as a fresh match.
+    local weaponSquadCfg = respawn.weaponSquad
+    local weaponSquadActive = {}        -- [playerName] = faction
+    local weaponSquadCooldownUntil = {} -- [faction] = epoch seconds
+
+    local function isWeaponSquadClass(className)
+        return weaponSquadCfg ~= nil and type(className) == "string"
+            and className:match("%.weapon_squad$") ~= nil
+    end
+
+    local function weaponSquadStatus(faction)
+        local maxLive = weaponSquadCfg.maxLive or 1
+        local live = 0
+        for _, f in pairs(weaponSquadActive) do
+            if f == faction then live = live + 1 end
+        end
+        if live >= maxLive then
+            return false, "weapon squad deployed"
+        end
+        local remain = math.ceil((weaponSquadCooldownUntil[faction] or 0) - os.epoch("utc") / 1000)
+        if remain > 0 then
+            return false, ("weapon squad on cooldown %ds"):format(remain)
+        end
+        return true, "READY"
+    end
+
+    -- Release dead or relogging operators' slots. Called on every respawn
+    -- session start, which is exactly when the previous operator died (or
+    -- hard-reset their session).
+    local function freeWeaponSquadSlots(target)
+        for owner in pairs(weaponSquadActive) do
+            if commands.exec(("execute if entity @a[name=%s,limit=1]"):format(owner)) then
+                if target and commands.exec("execute if entity " .. target .. ",name=" .. owner .. "]") then
+                    weaponSquadActive[owner] = nil
+                end
+            else
+                weaponSquadActive[owner] = nil
+            end
+        end
+    end
+
     local vehicles
     local v
     if features.tanks then
@@ -304,6 +355,7 @@ function book.run(ctx)
     end
 
     local function startModeSession(target, faction, team)
+        freeWeaponSquadSlots(target)
         if not factionBook(target, faction, features.tanks and ctx.radar) then return false end
         enableTrigger(target, MODE_TRIGGER)
         enableTrigger(target, RESET_TRIGGER)
@@ -399,7 +451,11 @@ function book.run(ctx)
         resetTrigger(target, SESSION_AGE_OBJECTIVE)
         if mode == 1 then
             log("Mode selected: " .. faction .. " infantry")
-            if classBook(area, data, faction, team, target) then
+            local function classStatus(className)
+                if not isWeaponSquadClass(className) then return true, "READY" end
+                return weaponSquadStatus(faction)
+            end
+            if classBook(area, data, faction, team, target, classStatus) then
                 commands.exec("/tag " .. target .. " add grandop_wait_class")
                 commands.exec("/tag " .. target .. " remove grandop_wait_mode")
                 enableTrigger(target, CLASS_TRIGGER)
@@ -468,6 +524,16 @@ function book.run(ctx)
             commands.exec("/tellraw " .. selector .. " {\"text\":\"Respawn quota exhausted\",\"color\":\"red\"}")
             return
         end
+        if isWeaponSquadClass(className) then
+            local ok, info = weaponSquadStatus(faction)
+            if not ok then
+                resetTrigger(selector, SPAWN_TRIGGER)
+                enableTrigger(selector, SPAWN_TRIGGER)
+                commands.exec(("/tellraw %s {\"text\":\"%s unavailable: %s\",\"color\":\"red\"}")
+                    :format(selector, className:sub(#faction + 2), info))
+                return
+            end
+        end
         commands.exec("/tag " .. selector .. " add grandop_processing")
         local target = processingSelector(team)
         resetTrigger(target, SPAWN_TRIGGER)
@@ -477,6 +543,11 @@ function book.run(ctx)
         randomTeleport(target, spawn, respawn.spawnRadius)
         local spawned = stevesArmy.spawnSquadmates(target, className, data)
         if spawned > 0 then log("Spawned " .. spawned .. " squadmates for " .. faction .. " " .. className) end
+        if isWeaponSquadClass(className) then
+            local owner = resolveProcessingPlayer(team) or target
+            weaponSquadActive[owner] = faction
+            weaponSquadCooldownUntil[faction] = os.epoch("utc") / 1000 + (weaponSquadCfg.cooldown or 120)
+        end
         if respawn.consumeDeployment then respawn.consumeDeployment(faction, "infantry", spawn.name) end
         if ctx.checkpoint then ctx.checkpoint("infantry deployment") end
         if respawn.displayScoreboard then respawn.displayScoreboard() end

@@ -11,6 +11,7 @@ local stevesArmy = {}
 local SOLDIER_TYPES = {
     rifleman = true,
     machine_gunner = true,
+    support = true,
     anti_tank = true,
 }
 
@@ -80,6 +81,13 @@ local function spawnRing(target, soldierType, itemsSnbt, count, radius, cx, cz)
     return spawned
 end
 
+-- Squad egg item ids the loadout JSON may use. support_spawn_egg entries
+-- spawn as the "support" type (heavy-weapon crews, e.g. the weapon squad).
+local EGG_ITEM_IDS = {
+    ["steves_army:soldier_spawn_egg"] = true,
+    ["steves_army:support_spawn_egg"] = true,
+}
+
 -- Spawn all squadmates configured in the deploying player's class kit.
 -- `radius` widens the spawn ring (tankers pass a larger value so soldiers
 -- don't materialize on the vehicle deck) and `cx`/`cz` shift the ring center
@@ -89,7 +97,7 @@ function stevesArmy.spawnSquadmates(target, className, data, radius, cx, cz)
     if not cls then return 0 end
     local total = 0
     for _, entry in ipairs(cls.items or {}) do
-        if type(entry) == "table" and entry.item == "steves_army:soldier_spawn_egg" then
+        if type(entry) == "table" and EGG_ITEM_IDS[entry.item] then
             local itemsSnbt = extractItems(entry.nbt or "")
             if not itemsSnbt then
                 print("Squadmate spawn skipped: no Items in egg for " .. className)
