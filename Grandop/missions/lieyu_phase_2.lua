@@ -265,7 +265,11 @@ return {
     mode = "breakthrough",
 
     features = {
-        tanks = true,
+        -- Tank respawn (the [Tank] book-menu mode: VMod schematic spawning,
+        -- destruction markers, abandonment) is disabled — players deploy as
+        -- infantry only. All vehiclePools/vehicleSpawns config below stays
+        -- dormant; flip this back to true to re-enable the tanker flow.
+        tanks = false,
         creative = false,
         stageSync = false,
         onboarding = true,

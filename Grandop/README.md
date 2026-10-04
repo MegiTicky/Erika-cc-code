@@ -8,12 +8,14 @@ the unified `lieyu_phase_2` Grandop event.
 One Command Computer runs the complete event:
 
 - The staged-capture objective and bossbar.
-- The chat-button infantry and tank respawn menus.
+- The chat-button infantry respawn menu.
 - Infantry class loadouts and teleports.
-- Tank deployment via VMod server schematics, availability, and respawn
-  cooldown tracking.
 - The `Troops_Strength` sidebar and reinforcement quotas.
 - Japan town retreat handling as objectives advance.
+
+Tank deployment (VMod schematics, tanker respawn mode, destruction markers)
+is implemented but **disabled** for this mission (`features.tanks = false`);
+the respawn menu shows Infantry only and the `sp_radar` requirement is off.
 
 The event command is:
 
@@ -26,8 +28,9 @@ run event lieyu_phase_2
 ### Computer And Peripherals
 
 - A Command Computer. The program uses Minecraft commands through `commands.exec`.
-- An `sp_radar` peripheral attached to the event computer. Tanks are enabled, so
-  the event refuses to start without it.
+- An `sp_radar` peripheral is NOT currently required: the tank feature is
+  disabled for this mission (`features.tanks = false`). It only becomes
+  mandatory when tanks are re-enabled.
 - A monitor is optional. The unified event uses chat menus; it does not require a
   monitor for player respawns.
 - HTTP must be enabled in ComputerCraft to use the GitHub installer.
@@ -264,24 +267,27 @@ The terminal prints the exact log filename when the event starts.
 
 1. Assign the player to `Blue` or `Red`.
 2. Send the player to that team's staging room.
-3. The player clicks a chat button for `Infantry` or `Tank`.
-4. Infantry players select a class and an available spawn location.
-5. Tank players select a tank and a vehicle spawn location.
-6. The event applies the loadout, teleports/deploys the player, consumes the
+3. The player clicks the `Infantry` chat button (the `Tank` mode is disabled
+   for this mission).
+4. The player selects a class and an available spawn location.
+5. The event applies the loadout, teleports the player, consumes the
    deployment quota, and updates the sidebar.
 
 The menu uses chat buttons backed by protected `/trigger` objectives. Players do
 not need OP: the event computer enables the valid trigger for the current menu,
-validates the selection, and performs the privileged tag, loadout, teleport, and
-vehicle operations. The trigger objectives are `g_resp_mode`, `g_resp_class`,
-`g_resp_spawn`, `g_resp_tank`, and `g_resp_tspawn`. The player should click each
-menu option once and wait for the next menu message.
+validates the selection, and performs the privileged tag, loadout, and teleport
+operations. The trigger objectives are `g_resp_mode`, `g_resp_class`, and
+`g_resp_spawn` (plus `g_resp_tank`/`g_resp_tspawn` when tanks are enabled). The
+player should click each menu option once and wait for the next menu message.
 
 ### Infantry Classes
 
-- USMC: `anti_tank`, `assault`, `commander`, `engineer`, `machine_gunner`,
-  and `medic`.
-- Japan: classes are loaded from `data/loadouts/lieyu_phase_2.json`.
+Both factions load classes from `data/loadouts/lieyu_phase_2_new.json`:
+
+- `standard` — the 14-soldier infantry squad (9 rifle / 3 MG / 2 AT).
+- `weapon_squad` — the 13-unit heavy-weapons section (see below).
+
+The `.tank` classes (and the tanker respawn mode) are currently disabled.
 
 ### Weapon Squad
 
@@ -324,6 +330,12 @@ Japan can select Town X, Town Y, or Town Z. The event's retreat handling
 exhausts Town X when stage 2 begins and Town Y when stage 3 begins.
 
 ### Tanks
+
+> **Disabled for this mission:** `features.tanks = false` in
+> `missions/lieyu_phase_2.lua`. The `[Tank]` respawn mode, VMod spawning,
+> markers, abandonment tracking and the radar requirement are all dormant;
+> the vehicle pool/ spawn config below is kept so flipping the flag back to
+> `true` re-enables everything.
 
 Tanks spawn directly from VMod server schematics instead of teleporting
 pre-placed ships out of a depot. Each deployment runs
@@ -392,8 +404,9 @@ Availability follows a Battlefield-style model configured in the mission's
   correction).
 - Admin `+/-` buttons on the tank monitor adjust `maxLive`.
 
-Current pools: `japan.chinu` and `USMC.sherman75usmc`, each `maxLive = 3`
-with a 30-second respawn cooldown.
+Pool config when tanks are enabled: `japan.chinu` and `USMC.sherman75usmc`,
+each `maxLive = 3` with a 30-second respawn cooldown. (Dormant while the
+tank feature is disabled.)
 
 One-time world-side prerequisites per server:
 
