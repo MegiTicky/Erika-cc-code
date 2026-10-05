@@ -312,9 +312,12 @@ their faction's staging area (checked every second — they died and
 respawned into the deploy room, no menu interaction required) or goes
 offline; a controller restart resets the pool like a fresh match. The
 cooldown keeps running from the original deployment, so the next weapon
-squad waits it out even though the slot is free. A blocked class shows
-`[weapon squad deployed]` or `[weapon squad on cooldown Ns]` in the class
-menu and is rejected at spawn selection with the same reason. A weapon
+squad waits it out even though the slot is free. The class menu shows the
+pool state in the label (`weapon_squad [weapon squad deployed]` /
+`[weapon squad on cooldown Ns]`), and clicking a blocked weapon squad
+warns in chat and re-renders the class menu — spawn selection is never
+reached. The spawn-selection gate stays as a fallback for races (someone
+else books the last slot between class pick and spawn pick). A weapon
 squad still costs one reinforcement ticket, and the Squad Refill horn only
 refills the `.standard` squad.
 

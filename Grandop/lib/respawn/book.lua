@@ -275,6 +275,15 @@ function book.run(ctx)
         return true, "READY"
     end
 
+    -- Class-menu status callback, shared by the mode-menu render and the
+    -- class-select gate so both display and enforce the same pool state.
+    local function classStatusFn(faction)
+        return function(className)
+            if not isWeaponSquadClass(className) then return true, "READY" end
+            return weaponSquadStatus(faction)
+        end
+    end
+
     -- Release slots for operators no longer leading a squad in the field:
     -- they went offline, or they are back inside their faction's staging
     -- area (they died and respawned into the deploy room — no menu
@@ -459,11 +468,7 @@ function book.run(ctx)
         resetTrigger(target, SESSION_AGE_OBJECTIVE)
         if mode == 1 then
             log("Mode selected: " .. faction .. " infantry")
-            local function classStatus(className)
-                if not isWeaponSquadClass(className) then return true, "READY" end
-                return weaponSquadStatus(faction)
-            end
-            if classBook(area, data, faction, team, target, classStatus) then
+            if classBook(area, data, faction, team, target, classStatusFn(faction)) then
                 commands.exec("/tag " .. target .. " add grandop_wait_class")
                 commands.exec("/tag " .. target .. " remove grandop_wait_mode")
                 enableTrigger(target, CLASS_TRIGGER)
@@ -502,6 +507,24 @@ function book.run(ctx)
         resetTrigger(target, CLASS_TRIGGER)
         resetTrigger(target, SESSION_AGE_OBJECTIVE)
         log("Class selected: " .. className)
+        -- A weapon-squad class must be bookable before the spawn menu: warn
+        -- and re-render the class menu (now carrying the status suffix)
+        -- instead of walking the player into a spawn selection that can't
+        -- deploy. The tellraw must precede the trigger reset — afterwards
+        -- the score-scoped selector matches nobody.
+        if isWeaponSquadClass(className) then
+            local ok, info = weaponSquadStatus(faction)
+            if not ok then
+                log("Class blocked: " .. className .. " (" .. info .. ")")
+                commands.exec(("/tellraw %s {\"text\":\"%s unavailable: %s\",\"color\":\"red\"}")
+                    :format(selector, className:sub(#faction + 2), info))
+                resetTrigger(selector, CLASS_TRIGGER)
+                enableTrigger(selector, CLASS_TRIGGER)
+                classBook(area, data, faction, team, target, classStatusFn(faction))
+                commands.exec("/tag " .. target .. " remove grandop_processing")
+                return
+            end
+        end
         if spawnBook(area, respawn, faction, team, ctx.stage, target) then
             commands.exec("/tag " .. target .. " add grandop_class_" .. classIndex)
             commands.exec("/tag " .. target .. " add grandop_wait_spawn")
@@ -527,18 +550,18 @@ function book.run(ctx)
         if not commands.exec("execute if entity " .. selector) then return end
         log("Infantry spawn selected: " .. faction .. " " .. spawn.name)
         if respawn.canDeploy and not respawn.canDeploy(faction, "infantry", spawn.name) then
+            commands.exec("/tellraw " .. selector .. " {\"text\":\"Respawn quota exhausted\",\"color\":\"red\"}")
             resetTrigger(selector, SPAWN_TRIGGER)
             enableTrigger(selector, SPAWN_TRIGGER)
-            commands.exec("/tellraw " .. selector .. " {\"text\":\"Respawn quota exhausted\",\"color\":\"red\"}")
             return
         end
         if isWeaponSquadClass(className) then
             local ok, info = weaponSquadStatus(faction)
             if not ok then
-                resetTrigger(selector, SPAWN_TRIGGER)
-                enableTrigger(selector, SPAWN_TRIGGER)
                 commands.exec(("/tellraw %s {\"text\":\"%s unavailable: %s\",\"color\":\"red\"}")
                     :format(selector, className:sub(#faction + 2), info))
+                resetTrigger(selector, SPAWN_TRIGGER)
+                enableTrigger(selector, SPAWN_TRIGGER)
                 return
             end
         end
@@ -607,15 +630,15 @@ function book.run(ctx)
         log("Tank spawn selected: " .. faction .. " " .. tankName .. " -> " .. spawn.name)
         local tankReady, tankInfo = vehicles.available(v, faction, tankName)
         if not tankReady then
+            commands.exec("/tellraw " .. selector .. " {\"text\":\"Tank unavailable: " .. tostring(tankInfo) .. "\",\"color\":\"red\"}")
             resetTrigger(selector, TANK_SPAWN_TRIGGER)
             enableTrigger(selector, TANK_SPAWN_TRIGGER)
-            commands.exec("/tellraw " .. selector .. " {\"text\":\"Tank unavailable: " .. tostring(tankInfo) .. "\",\"color\":\"red\"}")
             return
         end
         if respawn.canDeploy and not respawn.canDeploy(faction, "tank") then
+            commands.exec("/tellraw " .. selector .. " {\"text\":\"Respawn quota exhausted\",\"color\":\"red\"}")
             resetTrigger(selector, TANK_SPAWN_TRIGGER)
             enableTrigger(selector, TANK_SPAWN_TRIGGER)
-            commands.exec("/tellraw " .. selector .. " {\"text\":\"Respawn quota exhausted\",\"color\":\"red\"}")
             return
         end
         commands.exec("/tag " .. selector .. " add grandop_processing")
