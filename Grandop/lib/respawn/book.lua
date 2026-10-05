@@ -510,16 +510,17 @@ function book.run(ctx)
         -- A weapon-squad class must be bookable before the spawn menu: warn
         -- and re-render the class menu (now carrying the status suffix)
         -- instead of walking the player into a spawn selection that can't
-        -- deploy. The tellraw must precede the trigger reset — afterwards
-        -- the score-scoped selector matches nobody.
+        -- deploy. Everything here addresses the player by the processing
+        -- TAG, never by the click score — the reset above already zeroed
+        -- it, and a score-scoped selector would match nobody (lost warning)
+        -- and re-arm nobody (the re-rendered menu's buttons would be dead).
         if isWeaponSquadClass(className) then
             local ok, info = weaponSquadStatus(faction)
             if not ok then
                 log("Class blocked: " .. className .. " (" .. info .. ")")
                 commands.exec(("/tellraw %s {\"text\":\"%s unavailable: %s\",\"color\":\"red\"}")
-                    :format(selector, className:sub(#faction + 2), info))
-                resetTrigger(selector, CLASS_TRIGGER)
-                enableTrigger(selector, CLASS_TRIGGER)
+                    :format(target, className:sub(#faction + 2), info))
+                enableTrigger(target, CLASS_TRIGGER)
                 classBook(area, data, faction, team, target, classStatusFn(faction))
                 commands.exec("/tag " .. target .. " remove grandop_processing")
                 return
@@ -551,8 +552,9 @@ function book.run(ctx)
         log("Infantry spawn selected: " .. faction .. " " .. spawn.name)
         if respawn.canDeploy and not respawn.canDeploy(faction, "infantry", spawn.name) then
             commands.exec("/tellraw " .. selector .. " {\"text\":\"Respawn quota exhausted\",\"color\":\"red\"}")
-            resetTrigger(selector, SPAWN_TRIGGER)
-            enableTrigger(selector, SPAWN_TRIGGER)
+            -- The click disabled the trigger; re-arm everyone waiting on the
+            -- spawn menu by tag — the score-scoped selector is already dead.
+            enableTrigger(waitingSelector(team, "grandop_wait_spawn"), SPAWN_TRIGGER)
             return
         end
         if isWeaponSquadClass(className) then
@@ -560,8 +562,7 @@ function book.run(ctx)
             if not ok then
                 commands.exec(("/tellraw %s {\"text\":\"%s unavailable: %s\",\"color\":\"red\"}")
                     :format(selector, className:sub(#faction + 2), info))
-                resetTrigger(selector, SPAWN_TRIGGER)
-                enableTrigger(selector, SPAWN_TRIGGER)
+                enableTrigger(waitingSelector(team, "grandop_wait_spawn"), SPAWN_TRIGGER)
                 return
             end
         end
@@ -631,14 +632,12 @@ function book.run(ctx)
         local tankReady, tankInfo = vehicles.available(v, faction, tankName)
         if not tankReady then
             commands.exec("/tellraw " .. selector .. " {\"text\":\"Tank unavailable: " .. tostring(tankInfo) .. "\",\"color\":\"red\"}")
-            resetTrigger(selector, TANK_SPAWN_TRIGGER)
-            enableTrigger(selector, TANK_SPAWN_TRIGGER)
+            enableTrigger(waitingSelector(team, "grandop_wait_tank_spawn"), TANK_SPAWN_TRIGGER)
             return
         end
         if respawn.canDeploy and not respawn.canDeploy(faction, "tank") then
             commands.exec("/tellraw " .. selector .. " {\"text\":\"Respawn quota exhausted\",\"color\":\"red\"}")
-            resetTrigger(selector, TANK_SPAWN_TRIGGER)
-            enableTrigger(selector, TANK_SPAWN_TRIGGER)
+            enableTrigger(waitingSelector(team, "grandop_wait_tank_spawn"), TANK_SPAWN_TRIGGER)
             return
         end
         commands.exec("/tag " .. selector .. " add grandop_processing")
