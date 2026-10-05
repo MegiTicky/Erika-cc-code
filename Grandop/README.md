@@ -307,12 +307,16 @@ containers), and the 12 spawn-egg soldiers mirror a compressed MG section:
 
 Availability is a Battlefield-style pool (`respawn.weaponSquad` in the
 mission): `maxLive` operators per faction and a cooldown stamped at
-deployment. The slot frees when the operator dies and starts a new respawn
-session; a controller restart resets the pool like a fresh match. A blocked
-class shows `[weapon squad deployed]` or `[weapon squad on cooldown Ns]` in
-the class menu and is rejected at spawn selection with the same reason. A
-weapon squad still costs one reinforcement ticket, and the Squad Refill horn
-only refills the `.standard` squad.
+deployment. The slot frees as soon as the operator is detected back inside
+their faction's staging area (checked every second — they died and
+respawned into the deploy room, no menu interaction required) or goes
+offline; a controller restart resets the pool like a fresh match. The
+cooldown keeps running from the original deployment, so the next weapon
+squad waits it out even though the slot is free. A blocked class shows
+`[weapon squad deployed]` or `[weapon squad on cooldown Ns]` in the class
+menu and is rejected at spawn selection with the same reason. A weapon
+squad still costs one reinforcement ticket, and the Squad Refill horn only
+refills the `.standard` squad.
 
 Current pool: `maxLive = 1`, `cooldown = 120` per faction.
 

@@ -275,16 +275,24 @@ function book.run(ctx)
         return true, "READY"
     end
 
-    -- Release dead or relogging operators' slots. Called on every respawn
-    -- session start, which is exactly when the previous operator died (or
-    -- hard-reset their session).
-    local function freeWeaponSquadSlots(target)
-        for owner in pairs(weaponSquadActive) do
-            if commands.exec(("execute if entity @a[name=%s,limit=1]"):format(owner)) then
-                if target and commands.exec("execute if entity " .. target .. ",name=" .. owner .. "]") then
-                    weaponSquadActive[owner] = nil
+    -- Release slots for operators no longer leading a squad in the field:
+    -- they went offline, or they are back inside their faction's staging
+    -- area (they died and respawned into the deploy room — no menu
+    -- interaction required). processSpawn teleports the operator to the
+    -- frontline spawn before booking the slot, so a just-deployed operator
+    -- is never mistaken for one standing back at staging.
+    local function freeWeaponSquadSlots()
+        for owner, faction in pairs(weaponSquadActive) do
+            local present = commands.exec(("execute if entity @a[name=%s,limit=1]"):format(owner))
+            local released = not present
+            if present then
+                local area = stagingArea(respawn, faction, ctx.stage)
+                if area then
+                    released = commands.exec(("execute if entity @a[name=%s,limit=1,x=%d,y=%d,z=%d,distance=..%d]")
+                        :format(owner, area.x, area.y, area.z, area.radius + 1))
                 end
-            else
+            end
+            if released then
                 weaponSquadActive[owner] = nil
             end
         end
@@ -355,7 +363,7 @@ function book.run(ctx)
     end
 
     local function startModeSession(target, faction, team)
-        freeWeaponSquadSlots(target)
+        freeWeaponSquadSlots()
         if not factionBook(target, faction, features.tanks and ctx.radar) then return false end
         enableTrigger(target, MODE_TRIGGER)
         enableTrigger(target, RESET_TRIGGER)
@@ -701,6 +709,7 @@ function book.run(ctx)
                     clearSession(outside)
                 end
             end
+            if weaponSquadCfg then freeWeaponSquadSlots() end
             nextCleanup = os.clock() + 1
         end
         if os.clock() >= nextStagingScan then
