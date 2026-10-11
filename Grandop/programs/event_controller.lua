@@ -301,6 +301,8 @@ ctx.checkpoint(restoring and "recovery migration" or "initialization")
 local objectiveEngine
 if objective.type == "staged_capture" then
     objectiveEngine = grandopRequire("lib.objective.staged_capture")
+elseif objective.type == "pve_siege" then
+    objectiveEngine = grandopRequire("lib.objective.pve_siege")
 elseif objective.type == "control_point" then
     objectiveEngine = grandopRequire("lib.objective.control_point")
 elseif objective.type == "base_assault" then
@@ -358,6 +360,19 @@ if respawn.reinforcement and respawn.reinforcement.loop then
 end
 if respawn.retreatLoop then
     table.insert(tasks, function() respawn.retreatLoop(ctx) end)
+end
+if mission.siege then
+    -- Resolve the defender headcount before any loop starts: lieyu_siege
+    -- prompts on this terminal, and nothing else prints during input, so
+    -- the prompt stays readable.
+    local defenderConfig = mission.siege.defenderCount
+    if type(defenderConfig) == "function" then
+        mission.siege.defenderCount = defenderConfig()
+    end
+    local siegeWaves = grandopRequire("lib.siege.waves")
+    local siegeDirector = grandopRequire("lib.siege.director")
+    table.insert(tasks, function() siegeWaves.run(mission.siege, ctx) end)
+    table.insert(tasks, function() siegeDirector.run(mission.siege, ctx) end)
 end
 
 print("Starting unified event: " .. missionId)

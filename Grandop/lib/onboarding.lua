@@ -21,6 +21,14 @@ local function unassignedSelector(redTeam, blueTeam, extra)
     return "@a[" .. filters .. "]"
 end
 
+-- PVE defenders-only target set: everyone NOT on the blue (defender) team,
+-- including players stranded on the red team from a previous event.
+local function notBlueSelector(blueTeam, extra)
+    local filters = "team=!" .. blueTeam
+    if extra then filters = filters .. "," .. extra end
+    return "@a[" .. filters .. "]"
+end
+
 local function scoreboardValue(player, objective)
     local ok, output, value = commands.exec("scoreboard players get " .. player .. " " .. objective)
     if ok and tonumber(value) then return tonumber(value) end
@@ -37,14 +45,20 @@ local function countTeam(team, counter)
     return scoreboardValue(counter, TEAM_COUNT_OBJECTIVE)
 end
 
-local function sendPrompt(target, redTeam, blueTeam)
+local function sendPrompt(target, redTeam, blueTeam, defendersOnly)
     -- Team names are validated before this function is called. Keep this
     -- payload literal because some ComputerCraft versions mis-serialize JSON.
     local present = commands.exec("execute if entity " .. target)
     if not present then return false end
     local redCount = countTeam(redTeam, "onboard_red_count")
     local blueCount = countTeam(blueTeam, "onboard_blue_count")
-    local message = ('[{"text":"You are not assigned to the current event.\\n","color":"gold","bold":true},{"text":"If you already have a team and are fighting, ignore this message.\\n","color":"gray"},{"text":"Current teams: %s %d | %s %d\\n","color":"yellow"},{"text":"[ Join %s ]","color":"red","clickEvent":{"action":"run_command","value":"/trigger %s set 1"}},{"text":"   "},{"text":"[ Join %s ]\\n","color":"blue","clickEvent":{"action":"run_command","value":"/trigger %s set 1"}}]'):format(redTeam, redCount, blueTeam, blueCount, redTeam, RED_OBJECTIVE, blueTeam, BLUE_OBJECTIVE)
+    local message
+    if defendersOnly then
+        -- PVE events: only the defender team is offered.
+        message = ('[{"text":"You are not assigned to the current event.\\n","color":"gold","bold":true},{"text":"If you already have a team and are fighting, ignore this message.\\n","color":"gray"},{"text":"Defenders: %s %d\\n","color":"yellow"},{"text":"[ Join %s ]\\n","color":"blue","clickEvent":{"action":"run_command","value":"/trigger %s set 1"}}]'):format(blueTeam, blueCount, blueTeam, BLUE_OBJECTIVE)
+    else
+        message = ('[{"text":"You are not assigned to the current event.\\n","color":"gold","bold":true},{"text":"If you already have a team and are fighting, ignore this message.\\n","color":"gray"},{"text":"Current teams: %s %d | %s %d\\n","color":"yellow"},{"text":"[ Join %s ]","color":"red","clickEvent":{"action":"run_command","value":"/trigger %s set 1"}},{"text":"   "},{"text":"[ Join %s ]\\n","color":"blue","clickEvent":{"action":"run_command","value":"/trigger %s set 1"}}]'):format(redTeam, redCount, blueTeam, blueCount, redTeam, RED_OBJECTIVE, blueTeam, BLUE_OBJECTIVE)
+    end
     return commands.exec("tellraw " .. target .. " " .. message)
 end
 
@@ -82,6 +96,9 @@ function onboarding.run(ctx)
 
     local promptInterval = 30
     local loopInterval = math.max(0.25, tonumber(config.loop_interval) or 1)
+    -- PVE events: only the blue (defender) team is joinable. The red team
+    -- still must exist in mission.teams, but requests are never processed.
+    local defendersOnly = config.defenders_only == true
     local log = ctx.log or print
 
     commands.exec("team add " .. redTeam)
@@ -102,13 +119,20 @@ function onboarding.run(ctx)
         commands.exec("scoreboard players add @a " .. BLUE_OBJECTIVE .. " 0")
         -- A trigger objective must be enabled again after a player uses it.
         enableRequests(unassignedSelector(redTeam, blueTeam))
+        if defendersOnly then
+            -- Red-team holdovers must be able to click Join Blue too.
+            enableRequests(notBlueSelector(blueTeam))
+        end
         -- Never retain a request from before a player joined an event team.
         clearRequests("@a[team=" .. redTeam .. "]")
         clearRequests("@a[team=" .. blueTeam .. "]")
     end
 
     local function promptUnassigned()
-        if sendPrompt(unassignedSelector(redTeam, blueTeam), redTeam, blueTeam) then
+        local target = defendersOnly
+            and notBlueSelector(blueTeam)
+            or unassignedSelector(redTeam, blueTeam)
+        if sendPrompt(target, redTeam, blueTeam, defendersOnly) then
             log("Onboarding prompt sent to unassigned players")
         end
     end
@@ -120,9 +144,10 @@ function onboarding.run(ctx)
         enableRequests(unassignedSelector(redTeam, blueTeam))
     end
 
-    local function processTeam(team, objective, pendingTag, otherObjective)
+    local function processTeam(team, objective, pendingTag, otherObjective, requestSelector)
         local area = stagingArea(ctx, team)
-        local request = unassignedSelector(redTeam, blueTeam, "tag=!" .. pendingTag .. ",scores={" .. objective .. "=1..," .. otherObjective .. "=0}")
+        local request = requestSelector
+            or unassignedSelector(redTeam, blueTeam, "tag=!" .. pendingTag .. ",scores={" .. objective .. "=1..," .. otherObjective .. "=0}")
         if not area then
             commands.exec("tellraw " .. request .. " {\"text\":\"That team's staging area is unavailable.\",\"color\":\"red\"}")
             clearRequests(request)
@@ -158,9 +183,20 @@ function onboarding.run(ctx)
             promptUnassigned()
             lastPrompt = now
         end
+        if defendersOnly then
+            -- A stale red request (e.g. an old chat button, or a player still
+            -- on the red team) must not wedge a blue join: blue processing
+            -- looks at everyone not on blue, so zero stale red scores there.
+            clearRequests(notBlueSelector(blueTeam, "scores={" .. RED_OBJECTIVE .. "=1..}"))
+        end
         processConflicts()
-        processTeam(redTeam, RED_OBJECTIVE, RED_PENDING_TAG, BLUE_OBJECTIVE)
-        processTeam(blueTeam, BLUE_OBJECTIVE, BLUE_PENDING_TAG, RED_OBJECTIVE)
+        if not defendersOnly then
+            processTeam(redTeam, RED_OBJECTIVE, RED_PENDING_TAG, BLUE_OBJECTIVE)
+        end
+        processTeam(blueTeam, BLUE_OBJECTIVE, BLUE_PENDING_TAG, RED_OBJECTIVE,
+            defendersOnly and notBlueSelector(blueTeam,
+                "tag=!" .. BLUE_PENDING_TAG .. ",scores={" .. BLUE_OBJECTIVE .. "=1..}")
+            or nil)
         sleep(loopInterval)
     end
 end

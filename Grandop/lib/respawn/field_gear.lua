@@ -264,6 +264,12 @@ function field_gear.process(rc)
     if type(rc) ~= "table" or not rc.respawn then return end
     local refillCfg = rc.cfg
     local resetCfg = rc.sessionReset
+    -- Missions can hold the horn back until a phase is active (the siege
+    -- opens the refill when its start horn fires) without stopping the
+    -- reset book.
+    if refillCfg and refillCfg.activeWhen and not refillCfg.activeWhen() then
+        refillCfg = nil
+    end
     if not refillCfg and not resetCfg then return end
     local players = scanPlayers(rc.radar)
     if not players then return end
