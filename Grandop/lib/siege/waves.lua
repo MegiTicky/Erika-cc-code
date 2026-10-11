@@ -109,13 +109,23 @@ end
 -- ground and lands soldiers on canopies. `positioned over` refuses unloaded
 -- chunks, so failed spawns are retried a few times before the soldier is
 -- skipped (trunks still count, so a rare trunk-top spawn remains).
-local function spawnAt(cfg, x, z, itemsSnbt, callsign)
+local function spawnAt(cfg, x, z, itemsSnbt, callsign, role)
     local cmd
-    if callsign then
+    if callsign and role == "anti_tank" then
+        -- Squad anti-tank: same callsign enrollment as infantry, via the
+        -- dedicated enemy-AT squad branch (mod needs the AT-squad patch,
+        -- steves_army 0.5.2+; on older jars this syntax is unknown and the
+        -- spawn retries fail, so only deploy this with the patch live).
+        cmd = ("execute positioned %d 100 %d positioned over motion_blocking_no_leaves run " ..
+            "stevesarmy spawn enemy anti_tank squad %s ~ ~ ~ 0 0 %s")
+            :format(x, z, callsign, itemsSnbt)
+    elseif callsign then
         cmd = ("execute positioned %d 100 %d positioned over motion_blocking_no_leaves run " ..
             "stevesarmy spawn enemy squad %s ~ ~ ~ 0 0 %s")
             :format(x, z, callsign, itemsSnbt)
     else
+        -- Ambushers: squad-less on purpose, so they stay excluded from the
+        -- squad-based wave-clear check.
         cmd = ("execute positioned %d 100 %d positioned over motion_blocking_no_leaves run " ..
             "stevesarmy spawn enemy anti_tank ~ ~ ~ 0 0 %s")
             :format(x, z, itemsSnbt)
@@ -196,7 +206,7 @@ local function spawnSquad(cfg, kits, zone, waveIndex, squadIndex, lane)
                 local along = (slot - (inRank - 1) / 2) * spacing
                 local x = laneX + alongX * along - toObjX * spacing * rank
                 local z = laneZ + alongZ * along - toObjZ * spacing * rank
-                if spawnAt(cfg, math.floor(x + 0.5), math.floor(z + 0.5), kit, callsign) then
+                if spawnAt(cfg, math.floor(x + 0.5), math.floor(z + 0.5), kit, callsign, role) then
                     spawned = spawned + 1
                 end
             end
