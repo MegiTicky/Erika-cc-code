@@ -8,7 +8,7 @@
 --   run respawn  <mission> [country] respawn terminal
 --   run tickets  <mission>           ticket server
 --   run loadout   [loadout_file]     loadout service
---   run artillery                    artillery server
+--   run artillery <mission>          standalone artillery + spotter service
 --   run operator                     dedicated operator terminal
 --   run schemtest [schematic] [x y z] standalone VMod schematic spawn test
 --   run gen       [side]              export chest items for a loadout
@@ -23,7 +23,7 @@ local function usage()
     print("       run respawn <mission> [country]")
     print("       run tickets <mission>")
     print("       run loadout [loadout_file]")
-    print("       run artillery")
+    print("       run artillery <mission>")
     print("       run operator")
     print("       run schemtest [schematic] [x y z]")
     print("       run gen [side]")
@@ -112,7 +112,7 @@ local function interactive()
         table.insert(entries, { label = "Start loadout service", program = "programs/loadout_service", loadout = true })
     end
     if fs.exists("/programs/artillery_server.lua") then
-        table.insert(entries, { label = "Start artillery server", program = "programs/artillery_server" })
+        table.insert(entries, { label = "Start artillery server", program = "programs/artillery_server", mission = true })
     end
     if fs.exists("/programs/operator.lua") then
         table.insert(entries, { label = "Open operator terminal", program = "programs/operator" })
@@ -169,6 +169,7 @@ local programs = {
     tickets = "programs/ticket_server",
     loadout = "programs/loadout_service",
     artillery = "programs/artillery_server",
+    artillery_server = "programs/artillery_server",
     operator = "programs/operator",
     schemtest = "programs/test_schematic_spawn",
     gen = "tools/loadout_generator",

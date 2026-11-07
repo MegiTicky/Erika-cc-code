@@ -43,6 +43,7 @@ local infantry = grandopRequire("lib.respawn.infantry")
 local field_gear = grandopRequire("lib.respawn.field_gear")
 local stevesArmy = grandopRequire("lib.steves_army")
 local creative_area = grandopRequire("lib.services.creative_area")
+local artillery_spotter
 
 monitor.clear()
 monitor.setTextScale(0.5)
@@ -363,15 +364,28 @@ local function mainLoop()
     end
 end
 
---================================================================--
--- Run everything in parallel
---================================================================--
+if type(respawnCfg.artillerySpotter) == "table" then
+    artillery_spotter = grandopRequire("lib.artillery_spotter")
+end
+
+local function artillerySpotterLoop()
+    artillery_spotter.run({
+        respawn = respawnCfg,
+        teams = mission.teams,
+        radar = radar,
+    })
+end
+
 local tasks = {
     mainLoop,
     closestPlayerLoop,
     vehicleLifecycleLoop,
     stage.listener(stageHub),
 }
+
+if type(respawnCfg.artillerySpotter) == "table" then
+    table.insert(tasks, artillerySpotterLoop)
+end
 
 -- Field-gear upkeep is opt-in per mission.
 if refillCfg or resetCfg then

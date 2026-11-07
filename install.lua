@@ -1,6 +1,6 @@
 -- Download files from the Erika ComputerCraft Code repository.
 -- With no arguments, show the operator installation menu.
--- Usage: install [event lieyu_phase_2|riverbend_coldwar|lieyu_siege] [--force]
+-- Usage: install [event lieyu_phase_2|riverbend_coldwar|lieyu_siege|artillery] [--force]
 --        install <repository path> [destination] [--force]
 --        install bundle <manifest path> [--force]
 
@@ -10,6 +10,7 @@ local BRANCH = "main"
 local function usage()
     print("Usage: install")
     print("       install event lieyu_phase_2 [--force]")
+    print("       install event artillery [--force]")
     print("       install <repository path> [destination] [--force]")
     print("       install bundle <manifest path> [--force]")
     print("Example: install Utility/matrix.lua matrix.lua")
@@ -51,6 +52,10 @@ local PROFILES = {
     lieyu_siege = {
         label = "Lieyu PVE Siege - Defend the Objective",
         manifest = "Grandop/manifests/siege_event.txt",
+    },
+    artillery = {
+        label = "Standalone Artillery Server",
+        manifest = "Grandop/manifests/artillery.txt",
     },
 }
 
@@ -236,7 +241,8 @@ local function showMenu()
     print("1. " .. PROFILES.lieyu_phase_2.label)
     print("2. " .. PROFILES.riverbend_coldwar.label)
     print("3. " .. PROFILES.lieyu_siege.label)
-    print("4. Exit")
+    print("4. " .. PROFILES.artillery.label)
+    print("5. Exit")
     io.write("Select an option: ")
     local choice = io.read()
     if choice == "1" then
@@ -245,6 +251,8 @@ local function showMenu()
         return installManifest(PROFILES.riverbend_coldwar.manifest, false, PROFILES.riverbend_coldwar.label)
     elseif choice == "3" then
         return installManifest(PROFILES.lieyu_siege.manifest, false, PROFILES.lieyu_siege.label)
+    elseif choice == "4" then
+        return installManifest(PROFILES.artillery.manifest, false, PROFILES.artillery.label)
     end
     print("Installation cancelled.")
     return false

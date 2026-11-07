@@ -162,6 +162,10 @@ local stage = grandopRequire("lib.stage_channel")
 local creative = grandopRequire("lib.services.creative_area")
 local book = grandopRequire("lib.respawn.book")
 local onboarding = grandopRequire("lib.onboarding")
+local artillery_spotter
+if type(respawn.artillerySpotter) == "table" then
+    artillery_spotter = grandopRequire("lib.artillery_spotter")
+end
 
 local data = loadout.load(respawn.loadout_file)
 if not data then error("Missing loadout file: " .. respawn.loadout_file) end
@@ -352,7 +356,14 @@ local function creativeLoop()
     end
 end
 
+local function artillerySpotterLoop()
+    artillery_spotter.run(ctx)
+end
+
 local tasks = { objectiveLoop, bookLoop, onboardingLoop, stageListenerLoop, creativeLoop, checkpointLoop }
+if type(respawn.artillerySpotter) == "table" then
+    table.insert(tasks, artillerySpotterLoop)
+end
 local operatorService = grandopRequire("lib.operator_service")
 table.insert(tasks, function() operatorService.run(ctx, { rednet_side = "right" }) end)
 if respawn.reinforcement and respawn.reinforcement.loop then

@@ -68,6 +68,19 @@ respawn = {
         label = "Squad Refill",
         activeWhen = function() return siegeFlags.siegeStarted end,
     },
+    -- Persistent spyglass artillery designation. Keep disabled on missions that
+    -- do not explicitly provide an artillery battery.
+    artillerySpotter = {
+        label = "Artillery Spotter",
+        channel = 9001,
+        replyChannel = 10019,
+        maxRange = 256,
+        rayStep = 2,
+        timeout = 45,
+        -- Standalone artillery service owns this flow when launched with run artillery.
+        -- Full event mode retains the siege-start gate.
+        activeWhen = function() return siegeFlags.siegeStarted end,
+    },
 
     infantrySpawns = {
         USMC = {

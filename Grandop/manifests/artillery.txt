@@ -1,0 +1,5 @@
+# Standalone artillery server and siege mission configuration
+Grandop/run.lua|run
+Grandop/programs/artillery_server.lua|programs/artillery_server.lua
+Grandop/lib/artillery_spotter.lua|lib/artillery_spotter.lua
+Grandop/missions/lieyu_siege.lua|missions/lieyu_siege.lua
