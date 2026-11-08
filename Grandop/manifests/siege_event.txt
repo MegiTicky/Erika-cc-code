@@ -18,6 +18,8 @@ Grandop/lib/siege/director.lua|lib/siege/director.lua
 Grandop/lib/respawn/book.lua|lib/respawn/book.lua
 Grandop/lib/respawn/field_gear.lua|lib/respawn/field_gear.lua
 Grandop/lib/artillery_spotter.lua|lib/artillery_spotter.lua
+Grandop/lib/artillery.lua|lib/artillery.lua
+Grandop/lib/siege/artillery.lua|lib/siege/artillery.lua
 Grandop/programs/artillery_server.lua|programs/artillery_server.lua
 Grandop/lib/respawn/vehicles.lua|lib/respawn/vehicles.lua
 Grandop/lib/services/creative_area.lua|lib/services/creative_area.lua

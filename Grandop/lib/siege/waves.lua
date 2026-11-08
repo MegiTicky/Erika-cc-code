@@ -526,8 +526,9 @@ function runWaves(siege, ctx, zone, lanes)
             if squadSpawned > 0 then
                 table.insert(waveSquads, { callsign = callsign, bearing = lane.bearing })
                 table.insert(cfg.activeSquads, { callsign = callsign, bearing = lane.bearing })
+                if #waveSquads == 1 and cfg.artilleryScheduler then cfg.artilleryScheduler.startWave(wave) end
             end
-            sleep(cfg.squadSpawnInterval or 0.5)
+            if j < squadCount then sleep(cfg.squadSpawnInterval or 0.5) end
         end
         for _, lane in ipairs(waveLanes) do
             for _ = 1, (cfg.ambushersPerLane or 0) do
@@ -604,6 +605,7 @@ function runWaves(siege, ctx, zone, lanes)
                 .. "wave pacing cannot work until this is fixed")
         end
 
+        if cfg.artilleryScheduler then cfg.artilleryScheduler.endWave(wave) end
         if wave == totalWaves then
             objective.siegeCleared = true
             mc.title('{"text":"All waves repelled!","color":"green"}')

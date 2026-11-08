@@ -112,9 +112,9 @@ end
 
 -- Returns { {name, x, y, z}, ... } for every player on `team`. Used to aim
 -- suppress-area pings at live defender positions.
-function mc.playerPositions(team)
+function mc.playerPositions(team, excludeSpectators)
     local ok, output = commands.exec(
-        "execute as @a[team=" .. team .. "] at @s run data get entity @s Pos"
+        "execute as @a[team=" .. team .. (excludeSpectators and ",gamemode=!spectator" or "") .. "] at @s run data get entity @s Pos"
     )
     if type(output) == "string" then output = { output } end
     local positions = {}

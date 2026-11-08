@@ -380,8 +380,17 @@ if mission.siege then
     if type(defenderConfig) == "function" then
         mission.siege.defenderCount = defenderConfig()
     end
+    local intervalConfig = mission.siege.squadSpawnInterval
+    if type(intervalConfig) == "function" then
+        mission.siege.squadSpawnInterval = intervalConfig()
+    end
     local siegeWaves = grandopRequire("lib.siege.waves")
     local siegeDirector = grandopRequire("lib.siege.director")
+    if mission.siege.enemyArtillery then
+        local siegeArtillery = grandopRequire("lib.siege.artillery")
+        mission.siege.artilleryScheduler = siegeArtillery.new(mission.siege, ctx)
+        table.insert(tasks, function() mission.siege.artilleryScheduler.run() end)
+    end
     table.insert(tasks, function() siegeWaves.run(mission.siege, ctx) end)
     table.insert(tasks, function() siegeDirector.run(mission.siege, ctx) end)
 end

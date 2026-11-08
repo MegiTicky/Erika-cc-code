@@ -2,6 +2,7 @@
 local desktopLoadfile = loadfile
 local server = assert(desktopLoadfile("Grandop/programs/artillery_server.lua"))
 local spotter = assert(desktopLoadfile("Grandop/lib/artillery_spotter.lua"))()
+local artillery = assert(desktopLoadfile("Grandop/lib/artillery.lua"))()
 local cfg = {}
 local mission = { teams = { red = "allies", blue = "axis" },
     respawn = { artillerySpotter = cfg } }
@@ -56,6 +57,7 @@ os.pullEvent = function() error("Listener must not be needed for local submissio
 sleep = function(seconds) coroutine.yield(seconds) end
 loadfile = function(path)
     if path == "/lib/artillery_spotter.lua" then return function() return spotter end end
+    if path == "/lib/artillery.lua" then return function() return artillery end end
     if path == "/missions/test.lua" then return function() return mission end end
     error("Unexpected CC loadfile: " .. path)
 end

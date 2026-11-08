@@ -6,16 +6,9 @@ if not missionId then error("Usage: artillery_server <mission>") end
 
 local MODEM_SIDE = "right"
 local CHANNEL = 9001
-local ALTITUDE_Y = 350
-local PATTERNS = { concentrated = { sigma = 7, cap = 22 }, area = { sigma = 16, cap = 45 } }
 local FIRST_SHELL_DELAY = 15
 local COOLDOWNS = { [3] = 90, [6] = 150 }
-local RADIUS_SMOKE = 50
 local SHOT_INTERVAL_SEC = 1
-local SHELL_CMD = {
-  he = "/summon crusty_chunks:artillery_fire_projectile %d %d %d",
-  smoke = "/summon cbcmodernwarfare:smoke_mediumshell %d %d %d {Fuze:{id:\"createbigcannons:impact_fuze\",Count:1b}, Motion:[0d,-10d,0d]}"
-}
 
 local function rootRequire(name)
   local chunk, reason = loadfile("/" .. name:gsub("%.", "/") .. ".lua")
@@ -23,6 +16,7 @@ local function rootRequire(name)
   return chunk()
 end
 local spotter = rootRequire("lib.artillery_spotter")
+local artillery = rootRequire("lib.artillery")
 local missionFile = "/missions/" .. missionId:gsub("[^%w_%-]", "") .. ".lua"
 local chunk, reason = loadfile(missionFile)
 if not chunk then error("Cannot load " .. missionFile .. ": " .. tostring(reason)) end
@@ -62,26 +56,6 @@ end
 local function send(to, payload)
   modem.transmit(to, to, payload)
 end
--- Independent isotropic Gaussian offsets: no shared salvo aiming error.
--- Reject outside the circular cap; never clamp samples to its edge.
-local function impactOffset(pattern)
-  local spec = PATTERNS[pattern]
-  while true do
-    local radius = spec.sigma * math.sqrt(-2 * math.log(1 - math.random()))
-    if radius <= spec.cap then
-      local angle = 2 * math.pi * math.random()
-      local x, z = math.floor(radius * math.cos(angle) + 0.5), math.floor(radius * math.sin(angle) + 0.5)
-      if x*x + z*z <= spec.cap*spec.cap then return x, z end
-    end
-  end
-end
-local function fireShell(job)
-  local dx, dz
-  if job.shell == "smoke" then
-    dx, dz = math.random(-RADIUS_SMOKE, RADIUS_SMOKE), math.random(-RADIUS_SMOKE, RADIUS_SMOKE)
-  else dx, dz = impactOffset(job.pattern) end
-  commands.exec(SHELL_CMD[job.shell]:format(job.x + dx, ALTITUDE_Y, job.z + dz))
-end
 local function queryStatus(msg)
   local faction, team
   if msg.player then faction, team = factionOf(msg.player) end
@@ -97,7 +71,7 @@ local function acceptMission(msg)
   x, z, shells = x and math.floor(x), z and math.floor(z), shells
   local pattern = msg.pattern
   if pattern == nil then pattern = "concentrated" end -- Older clients omit pattern.
-  local valid = PATTERNS[pattern] and msg.requestId and msg.player and faction and x and z and shells and COOLDOWNS[shells] and (msg.shell == "he" or msg.shell == "smoke")
+  local valid = artillery.patterns[pattern] and msg.requestId and msg.player and faction and x and z and shells and COOLDOWNS[shells] and (msg.shell == "he" or msg.shell == "smoke")
   if seenRequests[msg.requestId] then valid = false end
   if not valid then return { type="mission_ack", accepted=false, requestId=msg.requestId, reason="invalid mission" } end
   if remaining(faction) > 0 then return { type="mission_ack", accepted=false, requestId=msg.requestId, faction=faction, team=team, remaining=remaining(faction), reason="cooldown" } end
@@ -137,7 +111,7 @@ local function worker()
     end
     if ready then
       local job = queue[ready]
-      fireShell(job)
+      artillery.fireShell(job)
       job.fired = job.fired + 1
       if job.fired == job.shells then
         table.remove(queue, ready)

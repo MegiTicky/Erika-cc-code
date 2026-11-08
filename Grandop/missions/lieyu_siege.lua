@@ -225,7 +225,17 @@ local siege = {
     startHorn = { label = "Start Wave 1" },
     forceHorn = { label = "Force Next Wave" },
     waveDelay = 30,    -- breather between waves
-    squadSpawnInterval = 40, -- seconds between squad spawns within a wave (trickle-in)
+    squadSpawnInterval = function()
+        while true do
+            write("Seconds between enemy squads [40]: ")
+            local input = read()
+            if input == "" then return 40 end
+            local value = tonumber(input)
+            if value and value > 0 and value < math.huge then return value end
+            print("Enter a positive number of seconds, or press Enter for 40")
+        end
+    end,
+    enemyArtillery = { barrages = { [4] = 1, [5] = 2, [6] = 2 }, delay = 30, interval = 30, radius = 150 },
     stuckTimeout = 600, -- next wave spawns anyway if enemies never reach 0
     enemyEntityTypes = { "steves_army:enemy_soldier", "steves_army:enemy_anti_tank" },
 
